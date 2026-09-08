@@ -630,6 +630,34 @@ function SuperAdminView() {
            </div>
 
            <div>
+             <h3 className="text-xl font-bold mb-6 flex items-center gap-3"><FileText className="w-6 h-6 text-slate-500" /> Tetapan Surat Panggilan Temuduga</h3>
+             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Tarikh Keluar Surat (Atas Kanan)</label>
+                    <input type="text" name="tarikhSuratPanggilan" value={settings.tarikhSuratPanggilan || ''} onChange={handleSettingsChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="cth: 8 September 2026" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Tarikh Temuduga</label>
+                    <input type="text" name="tarikhTemuduga" value={settings.tarikhTemuduga || ''} onChange={handleSettingsChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="cth: 8 November 2026" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Hari Temuduga</label>
+                    <input type="text" name="hariTemuduga" value={settings.hariTemuduga || ''} onChange={handleSettingsChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="cth: Sabtu" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Masa Temuduga</label>
+                    <input type="text" name="masaTemuduga" value={settings.masaTemuduga || ''} onChange={handleSettingsChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="cth: 8.00 pagi" />
+                  </div>
+                  <div className="lg:col-span-2">
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Tempat Temuduga</label>
+                    <input type="text" name="tempatTemuduga" value={settings.tempatTemuduga || ''} onChange={handleSettingsChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" placeholder="cth: Laman Selera, SMA Kota Gelanggi 3" />
+                  </div>
+                </div>
+             </div>
+           </div>
+
+           <div>
              <h3 className="text-xl font-bold mb-6 flex items-center gap-3"><LinkIcon className="w-6 h-6 text-slate-500" /> Pengurusan Maklumat Paparan & Infografik</h3>
              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>

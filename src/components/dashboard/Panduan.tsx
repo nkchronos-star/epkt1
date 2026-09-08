@@ -33,29 +33,28 @@ export default function Panduan() {
             <div className="relative pl-10 md:pl-12 group">
               <div className="absolute -left-[10px] top-1 w-5 h-5 rounded-full bg-slate-500 ring-[6px] ring-white transition-transform group-hover:scale-125"></div>
               <h3 className="text-xl font-bold text-slate-800 mb-3">Langkah 1: Isi Borang Permohonan</h3>
-              <p className="text-slate-600 mb-5 leading-relaxed">Ibu bapa atau penjaga perlu mengisi borang permohonan secara atas talian. Pastikan semua maklumat peribadi, maklumat penjaga, dan maklumat akademik diisi dengan lengkap.</p>
-              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200/60">
+              <p className="text-slate-600 mb-5 leading-relaxed">Ibu bapa atau penjaga perlu mengisi borang permohonan secara atas talian. Pastikan semua maklumat peribadi, maklumat penjaga, dan maklumat akademik diisi dengan lengkap dan tepat.</p>
+              <div className="bg-slate-50 rounded-xl p-5 border border-slate-200/60 mb-5">
                 <h4 className="font-bold text-sm text-slate-700 mb-3 flex items-center gap-2"><FileText className="w-4 h-4 text-emerald-600"/> Dokumen Diperlukan (Softcopy):</h4>
                 <ul className="grid sm:grid-cols-2 gap-2 pl-2 text-sm text-slate-600 font-medium">
                   <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>Gambar Pasport Pemohon</li>
-                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>Slip PBD (Akhir Tahun Thn 5) & Pertengahan Tahun Thn 6</li>
-                  <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>Slip Keputusan UPKK</li>
                 </ul>
               </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 text-amber-800">
+                <Info className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p className="text-sm font-medium leading-relaxed"><strong>Peringatan Penting:</strong> Sila cetak salinan <strong>BORANG PERMOHONAN KEMASUKAN</strong> setelah permohonan dihantar. Borang ini wajib dibawa semasa sesi temuduga bagi calon yang berjaya dipanggil.</p>
+              </div>
             </div>
-
             <div className="relative pl-10 md:pl-12 group">
               <div className="absolute -left-[10px] top-1 w-5 h-5 rounded-full bg-slate-200 ring-[6px] ring-white transition-colors group-hover:bg-slate-300"></div>
               <h3 className="text-xl font-bold text-slate-800 mb-3">Langkah 2: Semakan Kelayakan Temuduga</h3>
               <p className="text-slate-600 leading-relaxed">Pihak sekolah akan menapis permohonan. Calon boleh menyemak status kelayakan temuduga melalui sistem ini setelah tarikh semakan diumumkan. Calon yang berjaya perlu mencetak surat panggilan temuduga.</p>
             </div>
-
             <div className="relative pl-10 md:pl-12 group">
               <div className="absolute -left-[10px] top-1 w-5 h-5 rounded-full bg-slate-200 ring-[6px] ring-white transition-colors group-hover:bg-slate-300"></div>
               <h3 className="text-xl font-bold text-slate-800 mb-3">Langkah 3: Sesi Temuduga</h3>
-              <p className="text-slate-600 leading-relaxed">Calon perlu hadir ke sesi temuduga bersama ibu bapa/penjaga pada tarikh yang ditetapkan dalam surat panggilan. Temuduga merangkumi ujian Hafazan (70%), Tilawah (25%), dan Sahsiah (5%).</p>
+              <p className="text-slate-600 leading-relaxed">Calon perlu hadir ke sesi temuduga bersama ibu bapa/penjaga pada tarikh, masa dan tempat yang telah ditetapkan di dalam Surat Panggilan Temuduga tersebut.</p>
             </div>
-
             <div className="relative pl-10 md:pl-12 group">
               <div className="absolute -left-[10px] top-1 w-5 h-5 rounded-full bg-slate-200 ring-[6px] ring-white transition-colors group-hover:bg-slate-300"></div>
               <h3 className="text-xl font-bold text-slate-800 mb-3">Langkah 4: Semakan Tawaran</h3>

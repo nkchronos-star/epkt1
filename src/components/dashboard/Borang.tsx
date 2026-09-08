@@ -200,6 +200,14 @@ export default function Borang() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for duplicate IC
+    const cleanFormIC = formData.ic?.replace(/[^0-9]/g, '');
+    if (candidates.some(c => c.ic?.replace(/[^0-9]/g, '') === cleanFormIC)) {
+      alert('Ralat: No. Kad Pengenalan ini telah pun didaftarkan. Calon yang sama tidak dibenarkan memohon lebih daripada sekali.');
+      return;
+    }
+
     if (!agreed) { alert('Sila sahkan perakuan.'); return; }
     
     setIsSubmitting(true);

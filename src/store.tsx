@@ -37,6 +37,11 @@ const defaultSettings: ApplicationSettings = {
   tarikhTemuduga: '8 November 2025',
   tarikhLaporDiri: '3 Januari 2027',
   tarikhAkhirTerimaTawaran: '28 November 2026',
+  tarikhSuratPanggilan: '8 September 2026',
+  hariTemuduga: 'Sabtu',
+  masaTemuduga: '8.00 pagi',
+  tempatTemuduga: 'Laman Selera, SMA Kota Gelanggi 3',
+  pakaianTemuduga: 'Uniform sekolah',
   tahfizItems: [
     { id: 'hafazan', name: 'Hafazan', weight: 70 },
     { id: 'tilawah', name: 'Tilawah', weight: 25 },

@@ -37,7 +37,7 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
             </tr>
             <tr>
               <td className="pr-2">Tarikh</td>
-              <td>: {tarikhSemasa}</td>
+              <td>: {settings.tarikhSuratPanggilan || tarikhSemasa}</td>
             </tr>
           </tbody>
         </table>
@@ -76,19 +76,19 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
               </tr>
               <tr>
                 <td className="py-1">Hari</td>
-                <td className="py-1 font-bold">: Sabtu</td>
+                <td className="py-1 font-bold">: {settings.hariTemuduga || 'Sabtu'}</td>
               </tr>
               <tr>
                 <td className="py-1">Masa</td>
-                <td className="py-1 font-bold">: 8.00 pagi</td>
+                <td className="py-1 font-bold">: {settings.masaTemuduga || '8.00 pagi'}</td>
               </tr>
               <tr>
                 <td className="py-1">Tempat</td>
-                <td className="py-1 font-bold">: Laman Selera, SMA Kota Gelanggi 3</td>
+                <td className="py-1 font-bold">: {settings.tempatTemuduga || 'Laman Selera, SMA Kota Gelanggi 3'}</td>
               </tr>
               <tr>
                 <td className="py-1">Pakaian</td>
-                <td className="py-1 font-bold">: Uniform sekolah</td>
+                <td className="py-1 font-bold">: {settings.pakaianTemuduga || 'Uniform sekolah'}</td>
               </tr>
             </tbody>
           </table>

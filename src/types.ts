@@ -24,6 +24,11 @@ export interface ApplicationSettings {
   tarikhTemuduga?: string;
   tarikhLaporDiri?: string;
   tarikhAkhirTerimaTawaran?: string;
+  tarikhSuratPanggilan?: string;
+  hariTemuduga?: string;
+  masaTemuduga?: string;
+  tempatTemuduga?: string;
+  pakaianTemuduga?: string;
   borangPendaftaranUrl?: string;
   namaPengetua?: string;
   tandatanganPengetua?: string;
