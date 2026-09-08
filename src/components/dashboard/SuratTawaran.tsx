@@ -6,9 +6,9 @@ export default function SuratTawaran({ candidate }: { candidate: Candidate }) {
   const tarikhSemasa = new Date().toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <div className="bg-white p-10 max-w-4xl mx-auto shadow-2xl printable-area text-black font-sans text-sm">
+    <div className="bg-white p-6 sm:p-10 print:p-2 max-w-4xl mx-auto shadow-2xl printable-area text-black font-sans text-sm">
       {/* Header Surat */}
-      <div className="flex items-start mb-6 border-b-2 border-black pb-4">
+      <div className="flex items-start mb-3 border-b-2 border-black pb-2">
         <div className="flex items-center gap-6 w-full">
           <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Coat_of_arms_of_Pahang.svg/400px-Coat_of_arms_of_Pahang.svg.png" alt="Jata Negara" className="w-24 h-auto object-contain " />
           <div className="flex-1 flex justify-between items-start">
@@ -21,7 +21,7 @@ export default function SuratTawaran({ candidate }: { candidate: Candidate }) {
                 Pahang Darul Makmur
               </p>
             </div>
-            <div className="text-blue-900 text-sm leading-snug mt-7">
+            <div className="text-blue-900 text-sm leading-snug mt-4">
               <table>
                 <tbody>
                   <tr>
@@ -43,7 +43,7 @@ export default function SuratTawaran({ candidate }: { candidate: Candidate }) {
         </div>
       </div>
 
-      <div className="flex justify-end mb-8">
+      <div className="flex justify-end mb-4">
         <table className="text-sm">
           <tbody>
             <tr>
@@ -58,7 +58,7 @@ export default function SuratTawaran({ candidate }: { candidate: Candidate }) {
         </table>
       </div>
 
-      <div className="mb-6 font-bold uppercase">
+      <div className="mb-3 font-bold uppercase">
         <p>KEPADA :</p>
         <p>{candidate.name}</p>
         <p>{candidate.alamat1},</p>
@@ -127,24 +127,29 @@ export default function SuratTawaran({ candidate }: { candidate: Candidate }) {
         <p>Sekian, terima kasih.</p>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-4">
         <p className="font-bold mb-4">"MALAYSIA MADANI"</p>
         <p className="font-bold mb-4">"BERKHIDMAT UNTUK NEGARA"</p>
-        <p className="mb-16">Saya yang menjalankan amanah,</p>
+        <p className="mb-3">Saya yang menjalankan amanah,</p>
         
         <div>
-          <p className="font-bold uppercase">YAHAYA BIN TAHIR</p>
+          <p className="font-bold uppercase">{settings.namaPengetua || 'NAMA PENTADBIR'}</p>
           <p>Ketua Penolong Pengarah Kanan</p>
           <p>Sektor Pendidikan Islam</p>
           <p>b.p Pengarah Pendidikan Pahang</p>
         </div>
 
-        <div className="mt-8 text-xs">
+        <div className="mt-4 text-xs">
           <p>s.k.</p>
           <p>Pengetua</p>
           <p>SABK</p>
         </div>
       </div>
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          .printable-area { transform: scale(0.95); transform-origin: top center; }
+        }
+      `}} />
     </div>
   );
 }

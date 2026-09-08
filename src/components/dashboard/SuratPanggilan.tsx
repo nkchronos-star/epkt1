@@ -6,7 +6,7 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
   const tarikhSemasa = new Date().toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <div className="bg-white p-10 max-w-4xl mx-auto shadow-2xl printable-area text-black font-sans text-sm">
+    <div className="bg-white p-6 sm:p-10 print:p-2 max-w-4xl mx-auto shadow-2xl printable-area text-black font-sans text-sm">
       {/* Header Surat */}
       <div className="flex items-start mb-6 border-b-2 border-black pb-4">
         <div className="flex items-center gap-6 w-full">
@@ -28,7 +28,7 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
         </div>
       </div>
 
-      <div className="flex justify-end mb-8">
+      <div className="flex justify-end mb-4">
         <table className="text-sm">
           <tbody>
             <tr>
@@ -94,21 +94,21 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
           </table>
         </div>
 
-        <p className="mb-8 text-justify indent-8">
+        <p className="mb-4 text-justify indent-8">
           2.<span className="ml-4 inline-block">Semoga kehadiran saudara/saudari dapat melancarkan temuduga yang diadakan dengan jayanya.</span>
         </p>
 
-        <p className="mb-8">Sekian, terima kasih.</p>
+        <p className="mb-4">Sekian, terima kasih.</p>
       </div>
 
       <div className="mt-8">
         <p className="font-bold font-italic mb-4">"MALAYSIA MADANI"</p>
-        <p className="font-bold font-italic mb-8">"BERKHIDMAT UNTUK NEGARA"</p>
-        <p className="mb-16">Saya yang menjalankan amanah,</p>
+        <p className="font-bold font-italic mb-4">"BERKHIDMAT UNTUK NEGARA"</p>
+        <p className="mb-6">Saya yang menjalankan amanah,</p>
         
         <div>
           <p>.......................................................</p>
-          <p className="font-bold uppercase">(NOOR AZLAN BIN MOHAMMAD)</p>
+          <p className="font-bold uppercase">({settings.namaPengetua || 'NAMA PENTADBIR'})</p>
           <p>Pengetua</p>
           <p>SMA Kota Gelanggi 3</p>
         </div>
@@ -117,6 +117,11 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
           <p>s.k: Fail HEM</p>
         </div>
       </div>
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          .printable-area { transform: scale(0.95); transform-origin: top center; }
+        }
+      `}} />
     </div>
   );
 }

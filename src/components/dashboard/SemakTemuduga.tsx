@@ -31,7 +31,7 @@ export default function SemakTemuduga() {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Semakan Belum Dibuka</h2>
           <p className="text-gray-600 mb-6">Semakan kelayakan temuduga belum dibuka buat masa ini. Harap maklum.</p>
           <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700">
-             Tarikh semakan akan dibuka: <span className="font-semibold">{settings.tarikhBukaTemuduga}</span>
+             Tarikh semakan akan dibuka: <span className="font-semibold">{new Date(settings.tarikhBukaTemuduga).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
           </div>
         </div>
       </div>

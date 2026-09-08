@@ -154,7 +154,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       mode: 'no-cors',
       body: sheetData
     }).then(() => alert('Tetapan berjaya diselaraskan ke Pangkalan Data (Google Sheets)!'))
-      .catch(e => console.error("Sync error", e));
+      .catch(e => { console.warn('Sync warning:', e.message); alert('Ralat penyelarasan: Tidak dapat berhubung dengan pangkalan data. Sila periksa sambungan internet atau AdBlocker anda.'); });
   };
 
   const syncUsersToServer = (usersList: User[]) => {
@@ -167,7 +167,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       mode: 'no-cors',
       body: sheetData
     }).then(() => console.log('Users synced to server!'))
-      .catch(e => console.error("Sync users error", e));
+      .catch(e => console.warn('Sync users warning:', e.message));
   };
   
   // We'll also try to fetch settings on load
@@ -257,7 +257,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                method: 'POST',
                mode: 'no-cors',
                body: sheetData
-            }).catch(e => console.error("Auto-sync error", e));
+            }).catch(e => console.warn('Auto-sync warning:', e.message));
          }
       }
 
