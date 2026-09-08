@@ -1,9 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User as FirebaseUser } from 'firebase/auth';
-import { auth } from './lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from './lib/firebase';
 import { Candidate, ApplicationSettings, User, Infographic } from './types';
 
 interface AppState {
@@ -11,7 +6,7 @@ interface AppState {
   candidates: Candidate[];
   users: User[];
   currentUser: User | null;
-  firebaseUser: FirebaseUser | null;
+  firebaseUser: any | null;
   userRole: 'admin' | 'staff' | 'calon' | null;
   infographics: Infographic[];
 }
@@ -176,44 +171,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
   
   // We'll also try to fetch settings on load
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // Fetch role from firestore
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          let role: any = 'calon';
-          let userData: any = { username: user.email, name: user.displayName || user.email, role: 'calon' };
-          
-          if (userDoc.exists()) {
-             role = userDoc.data().role;
-             userData = userDoc.data();
-          } else {
-             // Create initial user doc if not exists
-             const { setDoc, serverTimestamp } = await import('firebase/firestore');
-             await setDoc(doc(db, 'users', user.uid), {
-               uid: user.uid,
-               email: user.email,
-               role: user.email === 'nkchronos@gmail.com' ? 'admin' : 'calon',
-               createdAt: serverTimestamp(),
-               updatedAt: serverTimestamp()
-             });
-          }
-          
-          setState(prev => ({ ...prev, firebaseUser: user, userRole: role, currentUser: userData }));
-        } catch (e) {
-          console.error("Error fetching user role", e);
-          setState(prev => ({ ...prev, firebaseUser: user, currentUser: { username: user.email!, name: user.email!, role: 'calon', id: user.uid } as User }));
-        }
-      } else {
-        setState(prev => ({ ...prev, firebaseUser: null, userRole: null, currentUser: null }));
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
+    useEffect(() => {
     fetch('https://script.google.com/macros/s/AKfycby9c8Gq0S4hMftdBUJPmiuJJreGIkg2BDAs58ZXgWefre_vsRWV4IqxGBI_5rzJGpRl/exec?action=getSettings')
       .then(res => res.json())
       .then(data => {

@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { AppProvider, useAppContext } from './store';
+const fs = require('fs');
+
+const code = `import { useState } from 'react';
+import { AppProvider } from './store';
 import { Home, FileText, CheckCircle, GraduationCap, Settings, BookOpen, Menu, X } from 'lucide-react';
 
 import Utama from './components/dashboard/Utama';
@@ -12,8 +14,6 @@ import AdminPanel from './components/dashboard/AdminPanel';
 type View = 'utama' | 'panduan' | 'borang' | 'temuduga' | 'tawaran' | 'admin';
 
 function AppContent() {
-  const { settings } = useAppContext();
-  const sesiKemasukan = settings?.sesiKemasukan || 'Sesi Kemasukan 2026/2027';
   const [activeView, setActiveView] = useState<View>('utama');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -44,7 +44,7 @@ function AppContent() {
           
           <div className="hidden md:flex items-center">
             <span className="bg-white/10 border border-white/20 px-4 py-2 rounded-md font-medium text-sm">
-              {sesiKemasukan}
+              Sesi Kemasukan 2026/2027
             </span>
           </div>
 
@@ -67,13 +67,13 @@ function AppContent() {
               <button
                 key={item.id}
                 onClick={() => setActiveView(item.id as View)}
-                className={`flex items-center gap-2.5 px-6 py-4 text-sm font-bold uppercase tracking-wider transition-all duration-200 ${
+                className={\`flex items-center gap-2.5 px-6 py-4 text-sm font-bold uppercase tracking-wider transition-all duration-200 \${
                   isActive 
                     ? 'bg-white text-[#0c6b4b] shadow-[inset_0_4px_0_0_#10b981]' 
                     : 'text-emerald-100 hover:bg-emerald-800/50 hover:text-white'
-                }`}
+                }\`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-[#0c6b4b]' : 'opacity-80'}`} />
+                <Icon className={\`w-5 h-5 \${isActive ? 'text-[#0c6b4b]' : 'opacity-80'}\`} />
                 {item.label}
               </button>
             );
@@ -92,11 +92,11 @@ function AppContent() {
                 <button
                   key={item.id}
                   onClick={() => { setActiveView(item.id as View); setMobileMenuOpen(false); }}
-                  className={`flex items-center gap-3 px-6 py-4 text-base font-bold transition-colors ${
+                  className={\`flex items-center gap-3 px-6 py-4 text-base font-bold transition-colors \${
                     isActive
                       ? 'bg-white/10 text-white border-l-4 border-white'
                       : 'text-emerald-100 hover:bg-white/5 hover:text-white border-l-4 border-transparent'
-                  }`}
+                  }\`}
                 >
                   <Icon className="w-5 h-5" />
                   {item.label}
@@ -144,3 +144,6 @@ export default function App() {
     </AppProvider>
   );
 }
+`;
+
+fs.writeFileSync('src/App.tsx', code);

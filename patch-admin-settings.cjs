@@ -1,39 +1,38 @@
 const fs = require('fs');
-let code = fs.readFileSync('src/components/dashboard/AdminPanel.tsx', 'utf8');
 
-// Insert new inputs into Kawalan Sistem
-const targetBorang = `               <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Tarikh Paparan Dibuka</label>
-                  <input type="text" name="tarikhBukaBorang" value={settings.tarikhBukaBorang} onChange={handleSettingsChange} className="w-full text-sm border-2 border-slate-200 rounded-xl p-3 font-medium text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none" />
-               </div>`;
+let adminCode = fs.readFileSync('src/components/dashboard/AdminPanel.tsx', 'utf8');
 
-const targetTemuduga = `               <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Tarikh Paparan Dibuka</label>
-                  <input type="text" name="tarikhBukaTemuduga" value={settings.tarikhBukaTemuduga} onChange={handleSettingsChange} className="w-full text-sm border-2 border-slate-200 rounded-xl p-3 font-medium text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none" />
-               </div>`;
+const additionalInputs = `
+                  <div className="md:col-span-2 mt-4 pt-4 border-t border-slate-100">
+                     <h4 className="font-semibold text-slate-800 mb-4">Maklumat Pengetua (Untuk Surat)</h4>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Pengetua</label>
+                          <input type="text" name="namaPengetua" value={settings.namaPengetua || ''} onChange={handleSettingsChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-1">Tandatangan Pengetua (Muat Naik Imej)</label>
+                          <input type="file" accept="image/*" onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                      const base64String = reader.result as string;
+                                      // Call a direct setSettings function since handleSettingsChange only takes events
+                                      setSettings(prev => ({ ...prev, tandatanganPengetua: base64String }));
+                                  };
+                                  reader.readAsDataURL(file);
+                              }
+                          }} className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-emerald-50 file:text-emerald-700" />
+                          {settings.tandatanganPengetua && <img src={settings.tandatanganPengetua} alt="Tandatangan" className="mt-2 h-10 object-contain border border-slate-200 p-1 bg-white rounded" />}
+                        </div>
+                     </div>
+                  </div>
+`;
 
-const replaceTemuduga = targetTemuduga + `
-               <div className="mt-4">
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Tarikh Temuduga</label>
-                  <input type="text" name="tarikhTemuduga" value={settings.tarikhTemuduga || ''} onChange={handleSettingsChange} className="w-full text-sm border-2 border-slate-200 rounded-xl p-3 font-medium text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none" placeholder="cth: 8 November 2025" />
-               </div>`;
+adminCode = adminCode.replace(
+  '<button onClick={syncSettingsToServer}',
+  additionalInputs + '\n<button onClick={syncSettingsToServer}'
+);
 
-const targetTawaran = `               <div>
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Tarikh Paparan Dibuka</label>
-                  <input type="text" name="tarikhBukaTawaran" value={settings.tarikhBukaTawaran} onChange={handleSettingsChange} className="w-full text-sm border-2 border-slate-200 rounded-xl p-3 font-medium text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none" />
-               </div>`;
-
-const replaceTawaran = targetTawaran + `
-               <div className="mt-4">
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Tarikh Lapor Diri</label>
-                  <input type="text" name="tarikhLaporDiri" value={settings.tarikhLaporDiri || ''} onChange={handleSettingsChange} className="w-full text-sm border-2 border-slate-200 rounded-xl p-3 font-medium text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none" placeholder="cth: 3 Januari 2027" />
-               </div>
-               <div className="mt-4">
-                  <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Tarikh Akhir Maklum Balas</label>
-                  <input type="text" name="tarikhAkhirTerimaTawaran" value={settings.tarikhAkhirTerimaTawaran || ''} onChange={handleSettingsChange} className="w-full text-sm border-2 border-slate-200 rounded-xl p-3 font-medium text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none" placeholder="cth: 28 November 2026" />
-               </div>`;
-
-code = code.replace(targetTemuduga, replaceTemuduga);
-code = code.replace(targetTawaran, replaceTawaran);
-
-fs.writeFileSync('src/components/dashboard/AdminPanel.tsx', code);
+fs.writeFileSync('src/components/dashboard/AdminPanel.tsx', adminCode);

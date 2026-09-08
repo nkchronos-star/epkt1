@@ -3,8 +3,6 @@ import { useAppContext } from '../../store';
 import { FileText, Save, Send, AlertCircle, Calendar, CheckCircle, X, LogIn } from 'lucide-react';
 import { Candidate } from '../../types';
 import { signInWithGoogle } from '../../lib/auth';
-import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 
 export default function Borang() {
@@ -39,95 +37,21 @@ export default function Borang() {
   };
 
 
-  const handleSaveDraft = async () => {
-    if (!firebaseUser) {
-      alert("Anda perlu log masuk untuk menyimpan draf ke awan.");
-      return;
-    }
-    setIsSavingDraft(true);
-    try {
-      const draftData = JSON.parse(JSON.stringify(formData));
-      if (draftData.gambarUrl && draftData.gambarUrl.length > 500000) draftData.gambarUrl = ''; 
-      if (draftData.pbd && draftData.pbd.slipUrl && draftData.pbd.slipUrl.length > 500000) draftData.pbd.slipUrl = '';
-      if (draftData.pbdD6 && draftData.pbdD6.slipUrl && draftData.pbdD6.slipUrl.length > 500000) draftData.pbdD6.slipUrl = '';
-      if (draftData.upkk && draftData.upkk.slipUrl && draftData.upkk.slipUrl.length > 500000) draftData.upkk.slipUrl = '';
 
-      await setDoc(doc(db, 'permohonan', firebaseUser.uid), {
-        userId: firebaseUser.uid,
-        status: 'draft',
-        studentName: draftData.name || 'Draf Tiada Nama',
-        icNumber: draftData.ic || 'Tiada IC',
-        candidateData: draftData,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-      
-      alert("Draf berjaya disimpan ke awan. Anda boleh menyambung isian pada bila-bila masa dengan log masuk menggunakan emel yang sama.");
-    } catch (e: any) {
-      alert("Gagal menyimpan draf: " + e.message);
-    } finally {
-      setIsSavingDraft(true); // Wait, should be false! Let's fix below.
-      setTimeout(() => setIsSavingDraft(false), 500);
-    }
-  };
-  // Load Draft from Firebase
-  useEffect(() => {
-    const loadDraft = async () => {
-      if (firebaseUser) {
-        try {
-          const docRef = doc(db, 'permohonan', firebaseUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-             const data = docSnap.data();
-             if (data.candidateData) {
-                setFormData(data.candidateData);
-                if (data.status === 'submitted') {
-                   setSubmitted(true);
-                }
-             }
-          }
-        } catch (e) {
-          console.error('Failed to load draft from Firebase', e);
-        }
-      }
-    };
-    loadDraft();
-  }, [firebaseUser]);
-
-  const [popup, setPopup] = useState({ show: false, title: '', message: '' });
-
-  // Auto save draft
-  useEffect(() => {
-    if (!submitted) {
-      try {
-        // Create a copy of formData without large images for local draft to avoid QuotaExceededError
-        const draftData = JSON.parse(JSON.stringify(formData));
-        if (draftData.gambarUrl && draftData.gambarUrl.length > 500000) draftData.gambarUrl = ''; // strip large image
-        if (draftData.pbd && draftData.pbd.slipUrl && draftData.pbd.slipUrl.length > 500000) draftData.pbd.slipUrl = '';
-        if (draftData.pbdD6 && draftData.pbdD6.slipUrl && draftData.pbdD6.slipUrl.length > 500000) draftData.pbdD6.slipUrl = '';
-        if (draftData.upkk && draftData.upkk.slipUrl && draftData.upkk.slipUrl.length > 500000) draftData.upkk.slipUrl = '';
-        
-        localStorage.setItem('borang_draft', JSON.stringify(draftData));
-      } catch (e) {
-        console.warn('Gagal menyimpan draf ke localStorage (saiz fail mungkin terlalu besar)', e);
-      }
-    }
-  }, [formData, submitted]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+  const handleChange = (e: any) => {
+    const { name, value, type, checked } = e.target;
     if (name.includes('.')) {
       const [section, field] = name.split('.');
       setFormData(prev => ({
         ...prev,
         [section]: {
           ...(prev as any)[section],
-          [field]: value
+          [field]: type === 'checkbox' ? checked : value
         }
       }));
     } else {
       setFormData(prev => {
          let updates: any = { [name]: typeof value === 'string' ? value.toUpperCase() : value };
-         
          // Poskod Auto Detect
          if (name === 'poskod' && value.length >= 2) {
              const prefix = value.substring(0, 2);
@@ -152,11 +76,8 @@ export default function Borang() {
                  updates.negeri = stateMap[prefix].toUpperCase();
              }
          }
-
-         if (name === 'ic' && value) {
+         if (name === 'ic' && typeof value === 'string') {
              const cleanIC = value.replace(/\D/g, '');
-             
-             // 1. Tarikh Lahir (6 digit awal)
              if (cleanIC.length >= 6) {
                  const yy = parseInt(cleanIC.substring(0, 2), 10);
                  const mm = cleanIC.substring(2, 4);
@@ -166,8 +87,6 @@ export default function Borang() {
                     updates.tarikhLahir = `${year}-${mm}-${dd}`;
                  }
              }
-
-             // 2. Negeri sahaja (digit 7-8) - Tempat lahir tak perlu auto
              if (cleanIC.length >= 8) {
                  const stateCode = cleanIC.substring(6, 8);
                  const codeMap: Record<string, string> = {
@@ -190,11 +109,9 @@ export default function Borang() {
                  };
                  const stateName = codeMap[stateCode];
                  if (stateName) {
-                     updates.negeri = stateName;
+                     updates.negeri = stateName.toUpperCase();
                  }
              }
-
-             // 3. Jantina (digit 12 - ganjil = lelaki, genap = perempuan)
              if (cleanIC.length === 12) {
                  const lastDigit = parseInt(cleanIC.substring(11, 12), 10);
                  if (!isNaN(lastDigit)) {
@@ -210,15 +127,9 @@ export default function Borang() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string, isNested?: string) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check file size (e.g. max 2MB)
-      const maxSize = 2 * 1024 * 1024; // 2MB
+      const maxSize = 2 * 1024 * 1024;
       if (file.size > maxSize) {
-        setPopup({
-          show: true,
-          title: 'Saiz Fail Terlalu Besar',
-          message: 'Saiz fail atau gambar melebihi had maksimum 2MB. Sila kecilkan saiz gambar anda sebelum memuat naik (contohnya dengan menangkap layar / screenshot gambar tersebut).'
-        });
-        // Reset the file input so it doesn't hold the large file
+        alert('Saiz fail melebihi had 2MB. Sila kecilkan gambar.');
         e.target.value = '';
         return;
       }
@@ -244,178 +155,61 @@ export default function Borang() {
     }
   };
 
-  const getMissingFields = () => {
-    const requiredFields = [
-      'name', 'ic', 'noSijilLahir', 'tarikhLahir', 'tempatLahir', 'jantina', 'alamat1', 'poskod', 'daerah', 'negeri', 'namaSekolahRendah',
-      'namaBapa', 'icBapa', 'warganegaraBapa', 'alamatBapa1', 'poskodBapa', 'daerahBapa', 'negeriBapa', 'pekerjaanBapa', 'telefonBapa',
-      'namaIbu', 'icIbu', 'warganegaraIbu', 'alamatIbu1', 'poskodIbu', 'daerahIbu', 'negeriIbu', 'pekerjaanIbu', 'telefonIbu'
-    ];
-    let missing: string[] = [];
-    const fieldNames: Record<string, string> = {
-      name: 'Nama Penuh', ic: 'No. KP', noSijilLahir: 'No. Sijil Lahir', tarikhLahir: 'Tarikh Lahir', tempatLahir: 'Tempat Lahir', jantina: 'Jantina',
-      alamat1: 'Alamat Rumah 1', poskod: 'Poskod', daerah: 'Daerah', negeri: 'Negeri', namaSekolahRendah: 'Sekolah Rendah',
-      namaBapa: 'Nama Bapa', icBapa: 'No. KP Bapa', warganegaraBapa: 'Warganegara Bapa', alamatBapa1: 'Alamat Bapa 1', poskodBapa: 'Poskod Bapa', daerahBapa: 'Daerah Bapa', negeriBapa: 'Negeri Bapa', pekerjaanBapa: 'Pekerjaan Bapa', telefonBapa: 'No. Telefon Bapa',
-      namaIbu: 'Nama Ibu', icIbu: 'No. KP Ibu', warganegaraIbu: 'Warganegara Ibu', alamatIbu1: 'Alamat Ibu 1', poskodIbu: 'Poskod Ibu', daerahIbu: 'Daerah Ibu', negeriIbu: 'Negeri Ibu', pekerjaanIbu: 'Pekerjaan Ibu', telefonIbu: 'No. Telefon Ibu'
-    };
-    for (const field of requiredFields) {
-      if (!formData[field as keyof Candidate]) missing.push(fieldNames[field] || field);
-    }
-    if (!formData.pbd?.bm || !formData.pbd?.bi || !formData.pbd?.matematik || !formData.pbd?.sains) missing.push("Keputusan PBD Darjah 5");
-    if (!formData.pbdD6?.bm || !formData.pbdD6?.bi || !formData.pbdD6?.matematik || !formData.pbdD6?.sains) missing.push("Keputusan PBD Darjah 6");
-    
-    const upkkKeys = ['alquran', 'akidah', 'sirah', 'adab', 'jawikhat', 'bahasaarab', 'ibadah', 'penghayatancarahidupislam', 'amalisolat'];
-    for(const key of upkkKeys) {
-        if(!(formData.upkk as any)?.[key]) missing.push("UPKK " + key);
-    }
-    if (!agreed) missing.push("Pengesahan (Tick Box)");
-    return missing;
-  };
-
-
-  const [tiadaBapa, setTiadaBapa] = useState(false);
-  const [tiadaIbu, setTiadaIbu] = useState(false);
-
   const copyAddressToBapa = () => {
     setFormData(prev => ({
-      ...prev,
-      alamatBapa1: prev.alamat1 || '',
-      alamatBapa2: prev.alamat2 || '',
-      poskodBapa: prev.poskod || '',
-      daerahBapa: prev.daerah || '',
-      negeriBapa: prev.negeri || '',
+      ...prev, alamatBapa1: prev.alamat1 || '', alamatBapa2: prev.alamat2 || '', poskodBapa: prev.poskod || '', daerahBapa: prev.daerah || '', negeriBapa: prev.negeri || ''
     }));
   };
 
   const copyAddressToIbu = () => {
     setFormData(prev => ({
-      ...prev,
-      alamatIbu1: prev.alamat1 || '',
-      alamatIbu2: prev.alamat2 || '',
-      poskodIbu: prev.poskod || '',
-      daerahIbu: prev.daerah || '',
-      negeriIbu: prev.negeri || '',
+      ...prev, alamatIbu1: prev.alamat1 || '', alamatIbu2: prev.alamat2 || '', poskodIbu: prev.poskod || '', daerahIbu: prev.daerah || '', negeriIbu: prev.negeri || ''
     }));
   };
 
-  const handleTiadaBapa = (checked: boolean) => {
+  const [tiadaBapa, setTiadaBapa] = useState(false);
+  const handleTiadaBapa = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
     setTiadaBapa(checked);
     if(checked) {
-       setFormData(prev => ({
-          ...prev,
-          namaBapa: 'TIADA MAKLUMAT',
-          icBapa: '-',
-          warganegaraBapa: '-',
-          alamatBapa1: '-',
-          alamatBapa2: '-',
-          poskodBapa: '-',
-          daerahBapa: '-',
-          negeriBapa: '-',
-          pekerjaanBapa: '-',
-          telefonBapa: '-'
-       }));
+       setFormData(prev => ({ ...prev, namaBapa: 'TIADA MAKLUMAT', icBapa: '-', warganegaraBapa: '-', alamatBapa1: '-', alamatBapa2: '-', poskodBapa: '-', daerahBapa: '-', negeriBapa: '-', pekerjaanBapa: '-', telefonBapa: '-' }));
     } else {
-       setFormData(prev => ({
-          ...prev,
-          namaBapa: '', icBapa: '', warganegaraBapa: '', alamatBapa1: '', alamatBapa2: '', poskodBapa: '', daerahBapa: '', negeriBapa: '', pekerjaanBapa: '', telefonBapa: ''
-       }));
+       setFormData(prev => ({ ...prev, namaBapa: '', icBapa: '', warganegaraBapa: '', alamatBapa1: '', alamatBapa2: '', poskodBapa: '', daerahBapa: '', negeriBapa: '', pekerjaanBapa: '', telefonBapa: '' }));
     }
   };
 
-  const handleTiadaIbu = (checked: boolean) => {
+  const [tiadaIbu, setTiadaIbu] = useState(false);
+  const handleTiadaIbu = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
     setTiadaIbu(checked);
     if(checked) {
-       setFormData(prev => ({
-          ...prev,
-          namaIbu: 'TIADA MAKLUMAT',
-          icIbu: '-',
-          warganegaraIbu: '-',
-          alamatIbu1: '-',
-          alamatIbu2: '-',
-          poskodIbu: '-',
-          daerahIbu: '-',
-          negeriIbu: '-',
-          pekerjaanIbu: '-',
-          telefonIbu: '-'
-       }));
+       setFormData(prev => ({ ...prev, namaIbu: 'TIADA MAKLUMAT', icIbu: '-', warganegaraIbu: '-', alamatIbu1: '-', alamatIbu2: '-', poskodIbu: '-', daerahIbu: '-', negeriIbu: '-', pekerjaanIbu: '-', telefonIbu: '-' }));
     } else {
-       setFormData(prev => ({
-          ...prev,
-          namaIbu: '', icIbu: '', warganegaraIbu: '', alamatIbu1: '', alamatIbu2: '', poskodIbu: '', daerahIbu: '', negeriIbu: '', pekerjaanIbu: '', telefonIbu: ''
-       }));
+       setFormData(prev => ({ ...prev, namaIbu: '', icIbu: '', warganegaraIbu: '', alamatIbu1: '', alamatIbu2: '', poskodIbu: '', daerahIbu: '', negeriIbu: '', pekerjaanIbu: '', telefonIbu: '' }));
     }
   };
 
-  const isFormComplete = () => {
-    const requiredFields = [
-      'name', 'ic', 'noSijilLahir', 'tarikhLahir', 'tempatLahir', 'jantina', 'alamat1', 'poskod', 'daerah', 'negeri', 'namaSekolahRendah',
-      'namaBapa', 'icBapa', 'warganegaraBapa', 'alamatBapa1', 'poskodBapa', 'daerahBapa', 'negeriBapa', 'pekerjaanBapa', 'telefonBapa',
-      'namaIbu', 'icIbu', 'warganegaraIbu', 'alamatIbu1', 'poskodIbu', 'daerahIbu', 'negeriIbu', 'pekerjaanIbu', 'telefonIbu'
-    ];
-    
-    for (const field of requiredFields) {
-      if (!formData[field as keyof Candidate]) return false;
-    }
-
-    if (!formData.pbd?.bm || !formData.pbd?.bi || !formData.pbd?.matematik || !formData.pbd?.sains) return false;
-    if (!formData.pbdD6?.bm || !formData.pbdD6?.bi || !formData.pbdD6?.matematik || !formData.pbdD6?.sains) return false;
-    
-    const upkkKeys = ['alquran', 'akidah', 'sirah', 'adab', 'jawikhat', 'bahasaarab', 'ibadah', 'penghayatancarahidupislam', 'amalisolat'];
-    for(const key of upkkKeys) {
-        if(!(formData.upkk as any)?.[key]) return false;
-    }
-
-    return agreed;
+  const getMissingFields = () => {
+    const req = ['name', 'ic', 'tarikhLahir', 'tempatLahir', 'jantina', 'alamat1', 'poskod', 'daerah', 'negeri', 'namaSekolahRendah', 'namaBapa', 'icBapa', 'pekerjaanBapa', 'telefonBapa', 'namaIbu', 'icIbu', 'pekerjaanIbu', 'telefonIbu'];
+    return req.filter(f => !formData[f as keyof Candidate]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const missing = getMissingFields();
-    if (missing.length > 0) {
-      alert("Sila lengkapkan ruangan berikut:\n\n" + missing.map(m => "- " + m).join("\n"));
-      return;
-    }
-
-    // Semak IC yang telah didaftarkan (untuk mengelakkan hantar 2 kali)
-    const existingCandidate = candidates.find((c: any) => c.ic === formData.ic);
-    if (existingCandidate) {
-      alert("Maaf, Nombor Kad Pengenalan ini telah pun didaftarkan.");
-      return;
-    }
-
+    if (!agreed) { alert('Sila sahkan perakuan.'); return; }
+    
     setIsSubmitting(true);
-
-    const newCandidate: Candidate = {
-      ...(formData as Candidate),
-      id: Math.random().toString(36).substr(2, 9),
-      statusBorang: 'LENGKAP',
-      statusTemuduga: 'MENUNGGU',
-      statusTawaran: 'DALAM_PERTIMBANGAN',
-    };
-
     try {
-      // 1. Simpan ke Firebase (Cloud Database)
-      const permohonanId = firebaseUser ? firebaseUser.uid : Math.random().toString(36).substr(2, 9);
-      newCandidate.id = permohonanId;
-
-      // Remove any undefined values which Firestore rejects
-      const safeCandidateData = JSON.parse(JSON.stringify(newCandidate));
+      const permohonanId = Math.random().toString(36).substr(2, 9);
+      const newCandidate: Candidate = {
+        ...(formData as Candidate),
+        id: permohonanId,
+        statusTemuduga: 'MENUNGGU',
+        statusTawaran: 'DALAM_PERTIMBANGAN'
+      };
       
-      await setDoc(doc(db, 'permohonan', permohonanId), {
-        userId: firebaseUser ? firebaseUser.uid : 'public',
-        status: 'submitted',
-        studentName: newCandidate.name || 'Tiada Nama',
-        icNumber: newCandidate.ic || 'Tiada IC',
-        candidateData: safeCandidateData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      }).catch(e => {
-        console.error("Firebase error", e);
-      });
-
-      // 2. Simpan ke Local State untuk update paparan serta merta
       saveCandidate(newCandidate);
-
-      // 3. Format data untuk dihantar ke Google Sheets Web App (Backup)
+      
       const sheetData = new URLSearchParams();
       sheetData.append('ID', newCandidate.id);
       sheetData.append('Tarikh', new Date().toISOString());
@@ -431,12 +225,12 @@ export default function Borang() {
       sheetData.append('Daerah', toTitleCase(newCandidate.daerah || ''));
       sheetData.append('Negeri', newCandidate.negeri || '');
       sheetData.append('NamaSekolahRendah', toTitleCase(newCandidate.namaSekolahRendah || ''));
-      
+            
       sheetData.append('NamaBapa', toTitleCase(newCandidate.namaBapa || ''));
       sheetData.append('ICBapa', newCandidate.icBapa || '');
       sheetData.append('PekerjaanBapa', toTitleCase(newCandidate.pekerjaanBapa || ''));
       sheetData.append('TelefonBapa', newCandidate.telefonBapa || '');
-      
+            
       sheetData.append('NamaIbu', toTitleCase(newCandidate.namaIbu || ''));
       sheetData.append('ICIbu', newCandidate.icIbu || '');
       sheetData.append('PekerjaanIbu', toTitleCase(newCandidate.pekerjaanIbu || ''));
@@ -446,6 +240,7 @@ export default function Borang() {
       sheetData.append('PBD_BI', newCandidate.pbd?.bi || '');
       sheetData.append('PBD_Math', newCandidate.pbd?.matematik || '');
       sheetData.append('PBD_Sains', newCandidate.pbd?.sains || '');
+      
       sheetData.append('PBD_D6_BM', newCandidate.pbdD6?.bm || '');
       sheetData.append('PBD_D6_BI', newCandidate.pbdD6?.bi || '');
       sheetData.append('PBD_D6_Math', newCandidate.pbdD6?.matematik || '');
@@ -459,11 +254,10 @@ export default function Borang() {
       sheetData.append('UPKK_BahasaArab', newCandidate.upkk?.bahasaarab || '');
       sheetData.append('UPKK_Ibadah', newCandidate.upkk?.ibadah || '');
       sheetData.append('URL_Gambar_Calon', newCandidate.gambarUrl || '');
-      sheetData.append('URL_Slip_PBD', newCandidate.pbd?.slipUrl || '');
-      sheetData.append('URL_Slip_PBD_D6', newCandidate.pbdD6?.slipUrl || '');
-      sheetData.append('URL_Slip_UPKK', newCandidate.upkk?.slipUrl || '');
 
-      // Send to Google Apps Script Web App
+
+
+
       await fetch('https://script.google.com/macros/s/AKfycby9c8Gq0S4hMftdBUJPmiuJJreGIkg2BDAs58ZXgWefre_vsRWV4IqxGBI_5rzJGpRl/exec', {
         method: 'POST',
         mode: 'no-cors',
@@ -474,7 +268,7 @@ export default function Borang() {
       localStorage.removeItem('borang_draft');
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Terdapat ralat semasa menghantar borang (Sambungan). Namun borang telah direkodkan dalam sistem. Sila hubungi admin.');
+      alert('Terdapat ralat semasa menghantar borang. Borang direkodkan dalam sistem.');
       setSubmitted(true);
       localStorage.removeItem('borang_draft');
     } finally {
@@ -483,50 +277,13 @@ export default function Borang() {
   };
 
 
+  const handleSaveDraft = async () => {
+    localStorage.setItem('borang_draft', JSON.stringify(formData));
+    setIsSavingDraft(true);
+    setTimeout(() => setIsSavingDraft(false), 1000);
+  };
+
   if (!isBuka) {
-    return (
-      <div className="animate-in fade-in py-20 px-4 flex flex-col items-center justify-center text-center">
-        <div className="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 max-w-lg w-full">
-          <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Permohonan Belum Dibuka</h2>
-          <p className="text-gray-600 mb-6">Sistem permohonan belum dibuka buat masa ini. Harap maklum.</p>
-          <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700">
-             Tarikh permohonan akan dibuka: <span className="font-semibold">{settings.tarikhBukaBorang}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!firebaseUser) {
-    return (
-      <div className="animate-in fade-in py-20 px-4 flex flex-col items-center justify-center text-center">
-        <div className="bg-white p-10 rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-100 max-w-md w-full">
-          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-             <LogIn className="w-10 h-10" />
-          </div>
-          <h2 className="text-2xl font-extrabold text-slate-900 mb-3">Log Masuk Diperlukan</h2>
-          <p className="text-slate-600 mb-8 font-medium">Sila log masuk menggunakan Google untuk memastikan draf permohonan anda tersimpan dan tidak hilang jika anda terhenti separuh jalan.</p>
-          <button 
-            type="button" 
-            onClick={async () => {
-              try {
-                await signInWithGoogle();
-              } catch (e: any) {
-                alert("Gagal log masuk: " + e.message);
-              }
-            }} 
-            className="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 text-slate-700 px-8 py-4 rounded-xl font-extrabold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
-          >
-            <svg viewBox="0 0 24 24" className="w-6 h-6" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-            Log Masuk Google
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (false) { // Skip the original check since we handled it
     return (
       <div className="animate-in fade-in py-20 px-4 flex flex-col items-center justify-center text-center">
         <div className="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 max-w-lg w-full">
@@ -737,9 +494,9 @@ export default function Borang() {
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2 tracking-wide uppercase">Jantina</label>
                 <select name="jantina" value={formData.jantina || ''} onChange={handleChange} className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all font-medium text-slate-800 bg-slate-50 focus:bg-white appearance-none" required>
-                  <option value="">-- Pilih --</option>
-                  <option value="Lelaki">Lelaki</option>
-                  <option value="Perempuan">Perempuan</option>
+                  <option value="">-- PILIH --</option>
+                  <option value="LELAKI">LELAKI</option>
+                  <option value="PEREMPUAN">PEREMPUAN</option>
                 </select>
               </div>
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -763,23 +520,23 @@ export default function Borang() {
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2 tracking-wide uppercase">Negeri</label>
                 <select name="negeri" value={formData.negeri || ''} onChange={handleChange} className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 uppercase focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all font-medium text-slate-800 bg-slate-50 focus:bg-white appearance-none" required>
-                  <option value="">-- Pilih Negeri --</option>
-                  <option value="Johor">Johor</option>
-                  <option value="Kedah">Kedah</option>
-                  <option value="Kelantan">Kelantan</option>
-                  <option value="Melaka">Melaka</option>
-                  <option value="Negeri Sembilan">Negeri Sembilan</option>
-                  <option value="Pahang">Pahang</option>
-                  <option value="Pulau Pinang">Pulau Pinang</option>
-                  <option value="Perak">Perak</option>
-                  <option value="Perlis">Perlis</option>
-                  <option value="Selangor">Selangor</option>
-                  <option value="Terengganu">Terengganu</option>
-                  <option value="Sabah">Sabah</option>
-                  <option value="Sarawak">Sarawak</option>
-                  <option value="W.P. Kuala Lumpur">W.P. Kuala Lumpur</option>
-                  <option value="W.P. Labuan">W.P. Labuan</option>
-                  <option value="W.P. Putrajaya">W.P. Putrajaya</option>
+                  <option value="">-- PILIH NEGERI --</option>
+                  <option value="JOHOR">JOHOR</option>
+                  <option value="KEDAH">KEDAH</option>
+                  <option value="KELANTAN">KELANTAN</option>
+                  <option value="MELAKA">MELAKA</option>
+                  <option value="NEGERI SEMBILAN">NEGERI SEMBILAN</option>
+                  <option value="PAHANG">PAHANG</option>
+                  <option value="PULAU PINANG">PULAU PINANG</option>
+                  <option value="PERAK">PERAK</option>
+                  <option value="PERLIS">PERLIS</option>
+                  <option value="SELANGOR">SELANGOR</option>
+                  <option value="TERENGGANU">TERENGGANU</option>
+                  <option value="SABAH">SABAH</option>
+                  <option value="SARAWAK">SARAWAK</option>
+                  <option value="W.P. KUALA LUMPUR">W.P. KUALA LUMPUR</option>
+                  <option value="W.P. LABUAN">W.P. LABUAN</option>
+                  <option value="W.P. PUTRAJAYA">W.P. PUTRAJAYA</option>
                   </select>
               </div>
               <div className="md:col-span-2">
@@ -801,7 +558,7 @@ export default function Borang() {
               <div className="flex gap-3 text-xs flex-wrap">
                  <button type="button" onClick={copyAddressToBapa} className="bg-white border border-slate-300 px-3 py-2 rounded-lg font-bold text-emerald-700 hover:bg-emerald-50 transition">Salin Alamat Pemohon</button>
                  <label className="flex items-center gap-2 cursor-pointer bg-white border border-slate-300 px-3 py-2 rounded-lg font-bold text-slate-700 hover:bg-slate-50 transition">
-                    <input type="checkbox" checked={tiadaBapa} onChange={(e) => handleTiadaBapa(e.target.checked)} className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4" /> Tiada Maklumat
+                    <input type="checkbox" checked={tiadaBapa} onChange={(e) => handleTiadaBapa(e as any)} className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4" /> Tiada Maklumat
                  </label>
               </div>
            </div>
@@ -840,23 +597,23 @@ export default function Borang() {
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2 tracking-wide uppercase">Negeri</label>
                 <select name="negeriBapa" value={formData.negeriBapa || ''} onChange={handleChange} className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 uppercase focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all font-medium text-slate-800 bg-slate-50 focus:bg-white appearance-none" required>
-                  <option value="">-- Pilih Negeri --</option>
-                  <option value="Johor">Johor</option>
-                  <option value="Kedah">Kedah</option>
-                  <option value="Kelantan">Kelantan</option>
-                  <option value="Melaka">Melaka</option>
-                  <option value="Negeri Sembilan">Negeri Sembilan</option>
-                  <option value="Pahang">Pahang</option>
-                  <option value="Pulau Pinang">Pulau Pinang</option>
-                  <option value="Perak">Perak</option>
-                  <option value="Perlis">Perlis</option>
-                  <option value="Selangor">Selangor</option>
-                  <option value="Terengganu">Terengganu</option>
-                  <option value="Sabah">Sabah</option>
-                  <option value="Sarawak">Sarawak</option>
-                  <option value="W.P. Kuala Lumpur">W.P. Kuala Lumpur</option>
-                  <option value="W.P. Labuan">W.P. Labuan</option>
-                  <option value="W.P. Putrajaya">W.P. Putrajaya</option>
+                  <option value="">-- PILIH NEGERI --</option>
+                  <option value="JOHOR">JOHOR</option>
+                  <option value="KEDAH">KEDAH</option>
+                  <option value="KELANTAN">KELANTAN</option>
+                  <option value="MELAKA">MELAKA</option>
+                  <option value="NEGERI SEMBILAN">NEGERI SEMBILAN</option>
+                  <option value="PAHANG">PAHANG</option>
+                  <option value="PULAU PINANG">PULAU PINANG</option>
+                  <option value="PERAK">PERAK</option>
+                  <option value="PERLIS">PERLIS</option>
+                  <option value="SELANGOR">SELANGOR</option>
+                  <option value="TERENGGANU">TERENGGANU</option>
+                  <option value="SABAH">SABAH</option>
+                  <option value="SARAWAK">SARAWAK</option>
+                  <option value="W.P. KUALA LUMPUR">W.P. KUALA LUMPUR</option>
+                  <option value="W.P. LABUAN">W.P. LABUAN</option>
+                  <option value="W.P. PUTRAJAYA">W.P. PUTRAJAYA</option>
                   </select>
               </div>
               <div>
@@ -874,7 +631,7 @@ export default function Borang() {
               <div className="flex gap-3 text-xs flex-wrap">
                  <button type="button" onClick={copyAddressToIbu} className="bg-white border border-slate-300 px-3 py-2 rounded-lg font-bold text-emerald-700 hover:bg-emerald-50 transition">Salin Alamat Pemohon</button>
                  <label className="flex items-center gap-2 cursor-pointer bg-white border border-slate-300 px-3 py-2 rounded-lg font-bold text-slate-700 hover:bg-slate-50 transition">
-                    <input type="checkbox" checked={tiadaIbu} onChange={(e) => handleTiadaIbu(e.target.checked)} className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4" /> Tiada Maklumat
+                    <input type="checkbox" checked={tiadaIbu} onChange={(e) => handleTiadaIbu(e as any)} className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4" /> Tiada Maklumat
                  </label>
               </div>
            </div>
@@ -913,23 +670,23 @@ export default function Borang() {
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-2 tracking-wide uppercase">Negeri</label>
                 <select name="negeriIbu" value={formData.negeriIbu || ''} onChange={handleChange} className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 uppercase focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all font-medium text-slate-800 bg-slate-50 focus:bg-white appearance-none" required>
-                  <option value="">-- Pilih Negeri --</option>
-                  <option value="Johor">Johor</option>
-                  <option value="Kedah">Kedah</option>
-                  <option value="Kelantan">Kelantan</option>
-                  <option value="Melaka">Melaka</option>
-                  <option value="Negeri Sembilan">Negeri Sembilan</option>
-                  <option value="Pahang">Pahang</option>
-                  <option value="Pulau Pinang">Pulau Pinang</option>
-                  <option value="Perak">Perak</option>
-                  <option value="Perlis">Perlis</option>
-                  <option value="Selangor">Selangor</option>
-                  <option value="Terengganu">Terengganu</option>
-                  <option value="Sabah">Sabah</option>
-                  <option value="Sarawak">Sarawak</option>
-                  <option value="W.P. Kuala Lumpur">W.P. Kuala Lumpur</option>
-                  <option value="W.P. Labuan">W.P. Labuan</option>
-                  <option value="W.P. Putrajaya">W.P. Putrajaya</option>
+                  <option value="">-- PILIH NEGERI --</option>
+                  <option value="JOHOR">JOHOR</option>
+                  <option value="KEDAH">KEDAH</option>
+                  <option value="KELANTAN">KELANTAN</option>
+                  <option value="MELAKA">MELAKA</option>
+                  <option value="NEGERI SEMBILAN">NEGERI SEMBILAN</option>
+                  <option value="PAHANG">PAHANG</option>
+                  <option value="PULAU PINANG">PULAU PINANG</option>
+                  <option value="PERAK">PERAK</option>
+                  <option value="PERLIS">PERLIS</option>
+                  <option value="SELANGOR">SELANGOR</option>
+                  <option value="TERENGGANU">TERENGGANU</option>
+                  <option value="SABAH">SABAH</option>
+                  <option value="SARAWAK">SARAWAK</option>
+                  <option value="W.P. KUALA LUMPUR">W.P. KUALA LUMPUR</option>
+                  <option value="W.P. LABUAN">W.P. LABUAN</option>
+                  <option value="W.P. PUTRAJAYA">W.P. PUTRAJAYA</option>
                   </select>
               </div>
               <div>
@@ -959,20 +716,13 @@ export default function Borang() {
                     <div key={sub} className="flex items-center justify-between border-b border-slate-100 pb-3">
                        <label className="text-sm font-bold text-slate-700 uppercase">{sub === 'bm' ? 'Bahasa Melayu' : sub === 'bi' ? 'Bahasa Inggeris' : sub}</label>
                        <select name={`pbd.${sub}`} value={(formData.pbd as any)?.[sub] || ''} onChange={handleChange} className="border-2 border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-slate-50 focus:bg-white w-32 appearance-none" required>
-                          <option value="">Pilih TP</option>
+                          <option value="">PILIH TP</option>
                           {[1,2,3,4,5,6].map(tp => <option key={tp} value={`TP${tp}`}>TP {tp}</option>)}
                        </select>
                     </div>
                  ))}
               </div>
-              <div className="bg-slate-50 border border-slate-200 border-dashed rounded-xl p-4 text-center flex flex-col items-center justify-center mb-10">
-                 {formData.pbd?.slipUrl && (
-                   <img src={formData.pbd?.slipUrl} alt="Slip PBD 5" className="max-h-40 object-contain rounded-xl mb-4" />
-                 )}
-                 <label className="text-sm font-bold text-slate-700 mb-2">Muat Naik Slip Peperiksaan PBD / Slip Darjah 5</label>
-                 <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'slipUrl', 'pbd')} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-50 file:text-emerald-600 hover:file:bg-emerald-100 cursor-pointer" />
-                 <p className="mt-2 text-xs text-slate-400">Gambar atau fail PDF (Maks 2MB)</p>
-              </div>
+
 
               <h3 className="font-extrabold text-slate-800 mb-6 bg-slate-100/50 p-4 rounded-xl border border-slate-200/60 uppercase tracking-widest text-sm">b. Keputusan PBD (Pertengahan Tahun Darjah 6)</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
@@ -980,19 +730,13 @@ export default function Borang() {
                     <div key={sub} className="flex items-center justify-between border-b border-slate-100 pb-3">
                        <label className="text-sm font-bold text-slate-700 uppercase">{sub === 'bm' ? 'Bahasa Melayu' : sub === 'bi' ? 'Bahasa Inggeris' : sub}</label>
                        <select name={`pbdD6.${sub}`} value={(formData.pbdD6 as any)?.[sub] || ''} onChange={handleChange} className="border-2 border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-slate-50 focus:bg-white w-32 appearance-none" required>
-                          <option value="">Pilih TP</option>
+                          <option value="">PILIH TP</option>
                           {[1,2,3,4,5,6].map(tp => <option key={tp} value={`TP${tp}`}>TP {tp}</option>)}
                        </select>
                     </div>
                  ))}
               </div>
-              <div className="bg-slate-50 border border-slate-200 border-dashed rounded-xl p-4 text-center flex flex-col items-center justify-center">
-                 {formData.pbdD6?.slipUrl && (
-                   <img src={formData.pbdD6?.slipUrl} alt="Slip PBD 6" className="max-h-40 object-contain rounded-xl mb-4" />
-                 )}
-                 <label className="text-sm font-bold text-slate-700 block mb-2">Muat Naik Slip PBD (Pertengahan Darjah 6)</label>
-                 <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'slipUrl', 'pbdD6')} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-50 file:text-emerald-600 hover:file:bg-emerald-100 cursor-pointer" />
-              </div>
+
            </div>
 
            <div>
@@ -1012,19 +756,13 @@ export default function Borang() {
                     <div key={sub.id} className="flex items-center justify-between border-b border-slate-100 pb-3">
                        <label className="text-sm font-bold text-slate-700 uppercase">{sub.label}</label>
                        <select name={`upkk.${sub.id}`} value={(formData.upkk as any)?.[sub.id] || ''} onChange={handleChange} className="border-2 border-slate-200 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-slate-50 focus:bg-white w-32 appearance-none" required>
-                          <option value="">Gred</option>
+                          <option value="">GRED</option>
                           {['A', 'B', 'C', 'D'].map(g => <option key={g} value={g}>{g}</option>)}
                        </select>
                     </div>
                  ))}
               </div>
-              <div className="bg-slate-50 border border-slate-200 border-dashed rounded-xl p-4 text-center flex flex-col items-center justify-center">
-                 {formData.upkk?.slipUrl && (
-                   <img src={formData.upkk?.slipUrl} alt="Slip UPKK" className="max-h-40 object-contain rounded-xl mb-4" />
-                 )}
-                 <label className="text-sm font-bold text-slate-700 block mb-2">Muat Naik Slip Keputusan UPKK</label>
-                 <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'slipUrl', 'upkk')} className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-50 file:text-emerald-600 hover:file:bg-emerald-100 cursor-pointer" />
-              </div>
+
            </div>
         </div>
 

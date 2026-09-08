@@ -25,6 +25,9 @@ export interface ApplicationSettings {
   tarikhLaporDiri?: string;
   tarikhAkhirTerimaTawaran?: string;
   borangPendaftaranUrl?: string;
+  namaPengetua?: string;
+  tandatanganPengetua?: string;
+  sesiKemasukan?: string;
   borangTingkatan1Link?: string;
   utamaPanduanLink?: string;
   tahfizItems?: AssessmentItem[];
