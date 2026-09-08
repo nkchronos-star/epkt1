@@ -1,19 +1,20 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Candidate, ApplicationSettings, User, Infographic } from './types';
+import { db } from './lib/firebase';
+import { collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, getDoc } from 'firebase/firestore';
 
 interface AppState {
   settings: ApplicationSettings;
   candidates: Candidate[];
   users: User[];
   currentUser: User | null;
-  firebaseUser: any | null;
-  userRole: 'admin' | 'staff' | 'calon' | null;
+  userRole: 'SUPER_ADMIN' | 'PENTADBIR' | 'TAHFIZ' | 'AKADEMIK' | null;
   infographics: Infographic[];
 }
 
 interface AppContextType extends AppState {
   updateSettings: (settings: Partial<ApplicationSettings>) => void;
-  syncSettingsToServer: () => void;
+  syncSettingsToServer: () => void; // Kept for API compatibility, but will auto-sync
   saveCandidate: (candidate: Candidate) => void;
   updateCandidate: (ic: string, data: Partial<Candidate>) => void;
   deleteCandidate: (ic: string) => void;
@@ -51,277 +52,163 @@ const defaultSettings: ApplicationSettings = {
 
 const defaultUsers: User[] = [
   { id: 'admin1', username: 'admin', password: '123', name: 'Super Admin', role: 'SUPER_ADMIN' },
-  { id: 'admin2', username: 'pentadbir', password: '123', name: 'Pentadbir Sekolah', role: 'PENTADBIR' },
-  { id: 'tahfiz1', username: 'tahfiz', password: '123', name: 'Ustaz/Ustazah (Penilai Tahfiz)', role: 'TAHFIZ' },
-  { id: 'akademik1', username: 'akademik', password: '123', name: 'Cikgu Akademik', role: 'AKADEMIK' }
-];
-
-const mockCandidates: Candidate[] = [
-  {
-    id: 'c1',
-    ic: '140101061234',
-    name: 'ALI BIN ABU',
-    noSijilLahir: 'CA12345',
-    tarikhLahir: '2014-01-01',
-    tempatLahir: 'Pahang',
-    jantina: 'Lelaki',
-    alamat1: 'No 1, Jalan Besar',
-    alamat2: 'Taman Seri',
-    poskod: '27000',
-    daerah: 'Jerantut',
-    negeri: 'Pahang',
-    namaSekolahRendah: 'SK Jerantut',
-    namaBapa: 'ABU BIN BAKAR',
-    icBapa: '800101061234',
-    warganegaraBapa: 'Malaysia',
-    alamatBapa1: 'No 1, Jalan Besar',
-    alamatBapa2: 'Taman Seri',
-    poskodBapa: '27000',
-    daerahBapa: 'Jerantut',
-    negeriBapa: 'Pahang',
-    pekerjaanBapa: 'Guru',
-    telefonBapa: '0123456789',
-    namaIbu: 'SITI BINTI ALI',
-    icIbu: '800202061234',
-    warganegaraIbu: 'Malaysia',
-    alamatIbu1: 'No 1, Jalan Besar',
-    alamatIbu2: 'Taman Seri',
-    poskodIbu: '27000',
-    daerahIbu: 'Jerantut',
-    negeriIbu: 'Pahang',
-    pekerjaanIbu: 'Suri Rumah',
-    telefonIbu: '0198765432',
-    pbd: { bm: 'TP5', bi: 'TP4', matematik: 'TP5', sains: 'TP4' },
-    upkk: { alquran: 'A', akidah: 'A', sirah: 'A', adab: 'A', jawikhat: 'A', bahasaarab: 'B', ibadah: 'A', penghayatancarahidupislam: 'A', amalisolat: 'A' },
-    statusBorang: 'LENGKAP',
-    statusTemuduga: 'LAYAK',
-    statusTawaran: 'DALAM_PERTIMBANGAN',
-  }
+  { id: 'tahfiz1', username: 'tahfiz1', password: '123', name: 'Ustaz/Ustazah', role: 'TAHFIZ' },
+  { id: 'akademik1', username: 'akademik1', password: '123', name: 'Cikgu Akademik', role: 'AKADEMIK' }
 ];
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  // Added firebase login functions mapped to context
-  const [state, setState] = useState<AppState>(() => {
-    const saved = localStorage.getItem('smag3_state');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.warn('Gagal memuatkan state, menggunakan data lalai', e);
-      }
-    }
-    return {
-      settings: defaultSettings,
-      candidates: mockCandidates,
-      users: defaultUsers,
-      currentUser: null,
-      firebaseUser: null,
-      userRole: null,
-      infographics: [],
-    };
+  const [state, setState] = useState<AppState>({
+    settings: defaultSettings,
+    candidates: [],
+    users: defaultUsers,
+    currentUser: null,
+    userRole: null,
+    infographics: [],
   });
 
+  // Listen to Firestore
   useEffect(() => {
-    try {
-      localStorage.setItem('smag3_state', JSON.stringify(state));
-    } catch (e) {
-      console.warn('Gagal menyimpan state ke localStorage (Quota mungkin melebihi had)', e);
-    }
-  }, [state]);
+    // 1. Settings
+    const unsubSettings = onSnapshot(doc(db, 'config', 'main'), (docSnap) => {
+      if (docSnap.exists()) {
+        setState(prev => ({ ...prev, settings: { ...defaultSettings, ...docSnap.data() as ApplicationSettings } }));
+      } else {
+        // Initialize default settings in Firestore
+        setDoc(doc(db, 'config', 'main'), defaultSettings).catch(console.error);
+      }
+    });
 
-  const updateSettings = (newSettings: Partial<ApplicationSettings>) => {
-    setState(prev => ({ ...prev, settings: { ...prev.settings, ...newSettings } }));
+    // 2. Users
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const usersList: User[] = [];
+      snapshot.forEach(doc => {
+        usersList.push({ id: doc.id, ...doc.data() } as User);
+      });
+      if (usersList.length === 0) {
+        // Initialize default users if empty
+        defaultUsers.forEach(u => setDoc(doc(db, 'users', u.id), u).catch(console.error));
+      } else {
+        setState(prev => ({ ...prev, users: usersList }));
+      }
+    });
+
+    // 3. Candidates
+    const unsubCandidates = onSnapshot(collection(db, 'candidates'), (snapshot) => {
+      const candidatesList: Candidate[] = [];
+      snapshot.forEach(doc => {
+        candidatesList.push({ id: doc.id, ...doc.data() } as Candidate);
+      });
+      setState(prev => ({ ...prev, candidates: candidatesList }));
+    });
+
+    // 4. Infographics
+    const unsubInfographics = onSnapshot(collection(db, 'infographics'), (snapshot) => {
+      const infoList: Infographic[] = [];
+      snapshot.forEach(doc => {
+        infoList.push({ id: doc.id, ...doc.data() } as Infographic);
+      });
+      setState(prev => ({ ...prev, infographics: infoList }));
+    });
+
+    return () => {
+      unsubSettings();
+      unsubUsers();
+      unsubCandidates();
+      unsubInfographics();
+    };
+  }, []);
+
+  const updateSettings = async (newSettings: Partial<ApplicationSettings>) => {
+    try {
+      await updateDoc(doc(db, 'config', 'main'), newSettings);
+    } catch (e) {
+      console.error("Error updating settings:", e);
+    }
   };
 
   const syncSettingsToServer = () => {
-    const sheetData = new URLSearchParams();
-    sheetData.append('action', 'updateSettings');
-    const currentSettings = state.settings;
-    Object.keys(currentSettings).forEach(key => {
-      let val = currentSettings[key];
-      if (typeof val === 'object' && val !== null) {
-        val = JSON.stringify(val);
-      } else {
-        val = String(val);
-      }
-      sheetData.append(key, val);
-    });
-
-    fetch('https://script.google.com/macros/s/AKfycby9c8Gq0S4hMftdBUJPmiuJJreGIkg2BDAs58ZXgWefre_vsRWV4IqxGBI_5rzJGpRl/exec', {
-      method: 'POST',
-      mode: 'no-cors',
-      body: sheetData
-    }).then(() => alert('Tetapan berjaya diselaraskan ke Pangkalan Data (Google Sheets)!'))
-      .catch(e => { console.warn('Sync warning:', e.message); alert('Ralat penyelarasan: Tidak dapat berhubung dengan pangkalan data. Sila periksa sambungan internet atau AdBlocker anda.'); });
+    // Left for compatibility, though realtime listener handles this.
+    alert('Sistem kini menggunakan storan Firebase. Semua perubahan disimpan secara automatik!');
   };
 
-  const syncUsersToServer = (usersList: User[]) => {
-    const sheetData = new URLSearchParams();
-    sheetData.append('action', 'updateUsers');
-    sheetData.append('usersData', JSON.stringify(usersList));
-
-    fetch('https://script.google.com/macros/s/AKfycby9c8Gq0S4hMftdBUJPmiuJJreGIkg2BDAs58ZXgWefre_vsRWV4IqxGBI_5rzJGpRl/exec', {
-      method: 'POST',
-      mode: 'no-cors',
-      body: sheetData
-    }).then(() => console.log('Users synced to server!'))
-      .catch(e => console.warn('Sync users warning:', e.message));
-  };
-  
-  // We'll also try to fetch settings on load
-    useEffect(() => {
-    fetch('https://script.google.com/macros/s/AKfycby9c8Gq0S4hMftdBUJPmiuJJreGIkg2BDAs58ZXgWefre_vsRWV4IqxGBI_5rzJGpRl/exec?action=getSettings')
-      .then(res => res.json())
-      .then(data => {
-        if (data && !data.error && Object.keys(data).length > 0) {
-          // Convert strings to booleans where necessary
-          const parsed = { ...data };
-          if(parsed.borangBuka === 'true' || parsed.borangBuka === true) parsed.borangBuka = true;
-          else if(parsed.borangBuka === 'false' || parsed.borangBuka === false) parsed.borangBuka = false;
-          
-          if(parsed.temudugaBuka === 'true' || parsed.temudugaBuka === true) parsed.temudugaBuka = true;
-          else if(parsed.temudugaBuka === 'false' || parsed.temudugaBuka === false) parsed.temudugaBuka = false;
-          
-          if(parsed.tawaranBuka === 'true' || parsed.tawaranBuka === true) parsed.tawaranBuka = true;
-          else if(parsed.tawaranBuka === 'false' || parsed.tawaranBuka === false) parsed.tawaranBuka = false;
-
-          try {
-             if (typeof parsed.tahfizItems === 'string') parsed.tahfizItems = JSON.parse(parsed.tahfizItems);
-          } catch(e) {}
-          try {
-             if (typeof parsed.akademikItems === 'string') parsed.akademikItems = JSON.parse(parsed.akademikItems);
-          } catch(e) {}
-
-          setState(prev => ({ ...prev, settings: { ...prev.settings, ...parsed } }));
-        }
-      }).catch(e => console.log('Offline/No settings fetched yet'));
-      
-    // Fetch users on load
-    fetch('https://script.google.com/macros/s/AKfycby9c8Gq0S4hMftdBUJPmiuJJreGIkg2BDAs58ZXgWefre_vsRWV4IqxGBI_5rzJGpRl/exec?action=getUsers')
-      .then(res => res.json())
-      .then(data => {
-        if (data && Array.isArray(data) && data.length > 0) {
-          setState(prev => ({ ...prev, users: data }));
-        }
-      }).catch(e => console.log('Offline/No users fetched yet'));
-  }, []);
-
-
-  const saveCandidate = (candidate: Candidate) => {
-    setState(prev => {
-      const existing = prev.candidates.findIndex(c => c.ic === candidate.ic);
-      if (existing >= 0) {
-        const newCandidates = [...prev.candidates];
-        newCandidates[existing] = candidate;
-        return { ...prev, candidates: newCandidates };
-      }
-      return { ...prev, candidates: [...prev.candidates, candidate] };
-    });
-  };
-
-
-  const deleteCandidate = (ic: string) => {
-    setState(prev => ({
-      ...prev,
-      candidates: prev.candidates.filter(c => c.ic !== ic)
-    }));
+  const saveCandidate = async (candidate: Candidate) => {
+    try {
+      await setDoc(doc(db, 'candidates', candidate.ic), candidate);
+    } catch (e) {
+      console.error("Error saving candidate:", e);
+      alert('Ralat menyimpan data permohonan.');
+    }
   };
 
   const updateCandidate = async (ic: string, data: Partial<Candidate>) => {
-    setState(prev => {
-      const newCandidates = prev.candidates.map(c => c.ic === ic ? { ...c, ...data } : c);
-      
-      // Auto-sync logic for Google Sheets Tab 2 (Keputusan_Temuduga)
-      // Only triggered if there is an update that affects Tab 2 (like marks or status)
-      if (data.markahTahfiz || data.markahAkademik || data.statusTemuduga || data.statusTawaran || data.maklumBalasTawaran) {
-         const c = newCandidates.find(can => can.ic === ic);
-         if (c) {
-            const sheetData = new URLSearchParams();
-            sheetData.append('Action', 'UPDATE');
-            sheetData.append('IC_Calon', c.ic);
-            sheetData.append('Nama_Calon', c.name);
-            sheetData.append('Jantina', c.jantina || '');
-            sheetData.append('Jumlah_Markah_Tahfiz', c.markahTahfiz?.jumlah?.toString() || '');
-            sheetData.append('Catatan_Tahfiz', c.markahTahfiz?.catatan || '');
-            sheetData.append('Penilai_Tahfiz', c.markahTahfiz?.dinilaiOleh || '');
-            sheetData.append('Jumlah_Markah_Akademik', c.markahAkademik?.jumlah?.toString() || '');
-            sheetData.append('Catatan_Akademik', c.markahAkademik?.catatan || '');
-            sheetData.append('Penilai_Akademik', c.markahAkademik?.dinilaiOleh || '');
-            sheetData.append('Status_Layak_Temuduga', c.statusTemuduga || '');
-            sheetData.append('Status_Akhir_Tawaran', c.statusTawaran || '');
-            sheetData.append('Maklum_Balas_Terima', c.maklumBalasTawaran || '');
-
-            fetch('https://script.google.com/macros/s/AKfycby9c8Gq0S4hMftdBUJPmiuJJreGIkg2BDAs58ZXgWefre_vsRWV4IqxGBI_5rzJGpRl/exec', {
-               method: 'POST',
-               mode: 'no-cors',
-               body: sheetData
-            }).catch(e => console.warn('Auto-sync warning:', e.message));
-         }
-      }
-
-      return {
-        ...prev,
-        candidates: newCandidates
-      };
-    });
+    try {
+      await updateDoc(doc(db, 'candidates', ic), data);
+    } catch (e) {
+      console.error("Error updating candidate:", e);
+    }
   };
 
+  const deleteCandidate = async (ic: string) => {
+    try {
+      await deleteDoc(doc(db, 'candidates', ic));
+    } catch (e) {
+      console.error("Error deleting candidate:", e);
+    }
+  };
 
   const login = (username: string, password?: string) => {
     const user = state.users.find(u => u.username === username);
-    if (user) {
-      // Allow login if password matches, or if no password is set for the user (fallback to '123')
-      const userPass = user.password || '123';
-      if (password === userPass) {
-        setState(prev => ({ ...prev, currentUser: user }));
-        return true;
-      }
+    if (user && (user.password === password || (!user.password && password === '123'))) {
+      setState(prev => ({ ...prev, currentUser: user, userRole: user.role }));
+      return true;
     }
     return false;
   };
 
   const logout = () => {
-    setState(prev => ({ ...prev, currentUser: null }));
+    setState(prev => ({ ...prev, currentUser: null, userRole: null }));
   };
 
-  const addUser = (user: User) => {
-    setState(prev => {
-      const newUsers = [...prev.users, user];
-      syncUsersToServer(newUsers);
-      return { ...prev, users: newUsers };
-    });
+  const addUser = async (user: User) => {
+    try {
+      await setDoc(doc(db, 'users', user.id || Date.now().toString()), user);
+    } catch (e) {
+      console.error("Error adding user:", e);
+    }
   };
 
-  const updateUser = (id: string, user: Partial<User>) => {
-    setState(prev => {
-      const newUsers = prev.users.map(u => u.id === id ? { ...u, ...user } : u);
-      syncUsersToServer(newUsers);
-      return { ...prev, users: newUsers };
-    });
+  const updateUser = async (id: string, user: Partial<User>) => {
+    try {
+      await updateDoc(doc(db, 'users', id), user);
+    } catch (e) {
+      console.error("Error updating user:", e);
+    }
   };
 
-  const deleteUser = (id: string) => {
-    setState(prev => {
-      const newUsers = prev.users.filter(u => u.id !== id);
-      syncUsersToServer(newUsers);
-      return { ...prev, users: newUsers };
-    });
+  const deleteUser = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', id));
+    } catch (e) {
+      console.error("Error deleting user:", e);
+    }
   };
 
-  const addInfographic = (info: Infographic) => {
-    setState(prev => ({
-      ...prev,
-      infographics: [...(prev.infographics || []), info]
-    }));
+  const addInfographic = async (info: Infographic) => {
+    try {
+      await setDoc(doc(db, 'infographics', info.id || Date.now().toString()), info);
+    } catch (e) {
+      console.error("Error adding infographic:", e);
+    }
   };
 
-  const deleteInfographic = (id: string) => {
-    setState(prev => ({
-      ...prev,
-      infographics: (prev.infographics || []).filter(i => i.id !== id)
-    }));
+  const deleteInfographic = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'infographics', id));
+    } catch (e) {
+      console.error("Error deleting infographic:", e);
+    }
   };
 
   return (

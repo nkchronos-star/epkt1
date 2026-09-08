@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { useAppContext } from '../../store';
 import { FileText, Save, Send, AlertCircle, Calendar, CheckCircle, X, LogIn } from 'lucide-react';
 import { Candidate } from '../../types';
-import { signInWithGoogle } from '../../lib/auth';
 
 
 export default function Borang() {
-  const { settings, saveCandidate, firebaseUser, candidates } = useAppContext();
+  const { settings, saveCandidate, candidates } = useAppContext();
   const isBuka = settings.borangBuka;
 
   // Form State
@@ -77,6 +76,11 @@ export default function Borang() {
              }
          }
          if (name === 'ic' && typeof value === 'string') {
+             if (value.includes('-')) {
+                 alert('Sila masukkan No. Kad Pengenalan tanpa tanda sengkang (-).');
+                 updates.ic = value.replace(/-/g, '');
+             }
+
              const cleanIC = value.replace(/\D/g, '');
              if (cleanIC.length >= 6) {
                  const yy = parseInt(cleanIC.substring(0, 2), 10);
@@ -210,60 +214,6 @@ export default function Borang() {
       
       saveCandidate(newCandidate);
       
-      const sheetData = new URLSearchParams();
-      sheetData.append('ID', newCandidate.id);
-      sheetData.append('Tarikh', new Date().toISOString());
-      sheetData.append('Nama', toTitleCase(newCandidate.name || ''));
-      sheetData.append('IC', newCandidate.ic || '');
-      sheetData.append('NoSijilLahir', newCandidate.noSijilLahir || '');
-      sheetData.append('TarikhLahir', newCandidate.tarikhLahir || '');
-      sheetData.append('TempatLahir', toTitleCase(newCandidate.tempatLahir || ''));
-      sheetData.append('Jantina', newCandidate.jantina || '');
-      sheetData.append('Alamat1', toTitleCase(newCandidate.alamat1 || ''));
-      sheetData.append('Alamat2', toTitleCase(newCandidate.alamat2 || ''));
-      sheetData.append('Poskod', newCandidate.poskod || '');
-      sheetData.append('Daerah', toTitleCase(newCandidate.daerah || ''));
-      sheetData.append('Negeri', newCandidate.negeri || '');
-      sheetData.append('NamaSekolahRendah', toTitleCase(newCandidate.namaSekolahRendah || ''));
-            
-      sheetData.append('NamaBapa', toTitleCase(newCandidate.namaBapa || ''));
-      sheetData.append('ICBapa', newCandidate.icBapa || '');
-      sheetData.append('PekerjaanBapa', toTitleCase(newCandidate.pekerjaanBapa || ''));
-      sheetData.append('TelefonBapa', newCandidate.telefonBapa || '');
-            
-      sheetData.append('NamaIbu', toTitleCase(newCandidate.namaIbu || ''));
-      sheetData.append('ICIbu', newCandidate.icIbu || '');
-      sheetData.append('PekerjaanIbu', toTitleCase(newCandidate.pekerjaanIbu || ''));
-      sheetData.append('TelefonIbu', newCandidate.telefonIbu || '');
-
-      sheetData.append('PBD_BM', newCandidate.pbd?.bm || '');
-      sheetData.append('PBD_BI', newCandidate.pbd?.bi || '');
-      sheetData.append('PBD_Math', newCandidate.pbd?.matematik || '');
-      sheetData.append('PBD_Sains', newCandidate.pbd?.sains || '');
-      
-      sheetData.append('PBD_D6_BM', newCandidate.pbdD6?.bm || '');
-      sheetData.append('PBD_D6_BI', newCandidate.pbdD6?.bi || '');
-      sheetData.append('PBD_D6_Math', newCandidate.pbdD6?.matematik || '');
-      sheetData.append('PBD_D6_Sains', newCandidate.pbdD6?.sains || '');
-
-      sheetData.append('UPKK_AlQuran', newCandidate.upkk?.alquran || '');
-      sheetData.append('UPKK_Akidah', newCandidate.upkk?.akidah || '');
-      sheetData.append('UPKK_Sirah', newCandidate.upkk?.sirah || '');
-      sheetData.append('UPKK_Adab', newCandidate.upkk?.adab || '');
-      sheetData.append('UPKK_JawiKhat', newCandidate.upkk?.jawikhat || '');
-      sheetData.append('UPKK_BahasaArab', newCandidate.upkk?.bahasaarab || '');
-      sheetData.append('UPKK_Ibadah', newCandidate.upkk?.ibadah || '');
-      sheetData.append('URL_Gambar_Calon', newCandidate.gambarUrl || '');
-
-
-
-
-      await fetch('https://script.google.com/macros/s/AKfycby9c8Gq0S4hMftdBUJPmiuJJreGIkg2BDAs58ZXgWefre_vsRWV4IqxGBI_5rzJGpRl/exec', {
-        method: 'POST',
-        mode: 'no-cors',
-        body: sheetData
-      });
-
       setSubmitted(true);
       localStorage.removeItem('borang_draft');
     } catch (error) {

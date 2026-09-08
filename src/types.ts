@@ -30,6 +30,8 @@ export interface ApplicationSettings {
   sesiKemasukan?: string;
   borangTingkatan1Link?: string;
   utamaPanduanLink?: string;
+  utamaContent?: string;
+  panduanContent?: string;
   tahfizItems?: AssessmentItem[];
   akademikItems?: AssessmentItem[];
 }

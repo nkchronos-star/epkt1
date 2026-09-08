@@ -2,19 +2,21 @@ import { useState, useEffect } from 'react';
 import { useAppContext } from '../../store';
 import { LogOut, Users, FileSignature, CheckSquare, Settings, Lock, XCircle, Trash2, BarChart2, Link as LinkIcon, FileText } from 'lucide-react';
 import { BorangCetakPDF } from './BorangCetakPDF';
+import PenilaianView from './PenilaianView';
 import { Candidate, Role } from '../../types';
 
 export default function AdminPanel() {
   const { currentUser, login, logout } = useAppContext();
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(username)) {
+    if (login(username, password)) {
       setError('');
     } else {
-      setError('Sila masukkan ID Pengguna yang sah (cth: admin, tahfiz1, akademik1, pentadbir1)');
+      setError('ID Pengguna atau Kata Laluan tidak sah (Gunakan password lalai: 123)');
     }
   };
 
@@ -37,6 +39,17 @@ export default function AdminPanel() {
                 onChange={e => setUsername(e.target.value)}
                 className="w-full px-5 py-4 text-lg border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 bg-slate-50 focus:bg-white font-medium text-slate-800"
                 placeholder="cth: tahfiz1"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2 tracking-wide uppercase">Kata Laluan</label>
+              <input 
+                type="password" 
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full px-5 py-4 text-lg border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 bg-slate-50 focus:bg-white font-medium text-slate-800"
+                placeholder="Kata Laluan"
                 required
               />
             </div>
@@ -91,29 +104,31 @@ export default function AdminPanel() {
 
 // ================= TAHFIZ VIEW =================
 function TahfizView() {
-  const { candidates, updateCandidate, currentUser } = useAppContext();
+  const { candidates, updateCandidate, currentUser, settings } = useAppContext();
   const [selectedCandidate, setSelectedCandidate] = useState('');
   
   // Only show candidates who are LAYAK temuduga and haven't been marked by Tahfiz yet
   const pendingCandidates = candidates.filter(c => c.statusTemuduga === 'LAYAK' && !c.markahTahfiz);
   const currentC = candidates.find(c => c.ic === selectedCandidate);
 
-  const [markah, setMarkah] = useState({ jumlah: 0, catatan: '' });
+  const tahfizItems = settings.tahfizItems || [];
+  const [markah, setMarkah] = useState<Record<string, number>>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentC) return;
     
+    const jumlah = tahfizItems.reduce((acc, item) => acc + (markah[item.id] || 0), 0);
     updateCandidate(currentC.ic, {
       markahTahfiz: {
         ...markah,
-        jumlah: Number(markah.hafazan) + Number(markah.tilawah) + Number(markah.sahsiah),
+        jumlah,
         dinilaiOleh: currentUser?.name
       }
     });
     alert('Markah berjaya disimpan!');
     setSelectedCandidate('');
-    setMarkah({ jumlah: 0, catatan: '' });
+    setMarkah({});
   };
 
   return (
@@ -154,39 +169,21 @@ function TahfizView() {
              
              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Hafazan (70%)</label>
-                    <input type="number" max="70" min="0" required value={markah.hafazan} onChange={e=>setMarkah({...markah, hafazan: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Tilawah (25%)</label>
-                    <input type="number" max="25" min="0" required value={markah.tilawah} onChange={e=>setMarkah({...markah, tilawah: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Sahsiah (5%)</label>
-                    <input type="number" max="5" min="0" required value={markah.sahsiah} onChange={e=>setMarkah({...markah, sahsiah: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
-                  </div>
+                  {tahfizItems.map((item) => (
+                      <div key={item.id}>
+                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">{item.name} ({item.weight} markah)</label>
+                        <input type="number" max={item.weight} min="0" required value={markah[item.id] || ''} onChange={e=>setMarkah({...markah, [item.id]: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
+                      </div>
+                  ))}
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Jumlah Keseluruhan</label>
-                    <input type="text" readOnly value={Number(markah.hafazan) + Number(markah.tilawah) + Number(markah.sahsiah)} className="w-full p-4 rounded-xl border-2 border-slate-200 bg-slate-100 font-extrabold text-xl text-slate-900" />
+                    <input type="text" readOnly value={tahfizItems.reduce((acc, item) => acc + (markah[item.id] || 0), 0)} className="w-full p-4 rounded-xl border-2 border-slate-200 bg-slate-100 font-extrabold text-xl text-slate-900" />
                   </div>
                 </div>
                 <div className="pt-6 flex justify-end">
                   <button type="submit" className="bg-emerald-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-lg w-full sm:w-auto">Simpan Markah</button>
                 </div>
              </form>
-         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-           {infographics?.map(info => (
-             <div key={info.id} className="relative rounded-xl overflow-hidden border border-slate-200 shadow-sm group">
-               <img src={info.url} alt={info.title} className="w-full h-48 object-cover" />
-               <div className="p-4 bg-white">
-                 <h4 className="font-bold text-slate-800 truncate">{info.title}</h4>
-               </div>
-               <button onClick={() => deleteInfographic(info.id)} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><XCircle className="w-4 h-4" /></button>
-             </div>
-           ))}
-         </div>
-
            </div>
          )}
        </div>
@@ -194,49 +191,15 @@ function TahfizView() {
        <div className="mt-16">
           <h4 className="text-xl font-extrabold text-slate-800 mb-6 border-b border-slate-100 pb-4">Calon Yang Telah Dinilai Oleh Anda Hari Ini</h4>
           <div className="overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm">
-         <div className="bg-slate-50 p-6 border-b border-slate-200">
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              const username = fd.get("username") as string;
-              const name = fd.get("name") as string;
-              const role = fd.get("role") as string as any;
-              if (username && name && role) {
-                 addUser({ id: "user-" + Date.now(), username, name, role });
-                 e.currentTarget.reset();
-              }
-            }} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-               <div>
-                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">ID Pengguna</label>
-                 <input type="text" name="username" className="w-full border-2 border-slate-200 rounded-xl px-4 py-2" required />
-               </div>
-               <div>
-                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Nama Penuh</label>
-                 <input type="text" name="name" className="w-full border-2 border-slate-200 rounded-xl px-4 py-2" required />
-               </div>
-               <div>
-                 <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Peranan</label>
-                 <select name="role" className="w-full border-2 border-slate-200 rounded-xl px-4 py-2 bg-white" required>
-                    <option value="">-- Pilih Peranan --</option>
-                    <option value="SUPER_ADMIN">Super Admin</option>
-                    <option value="PENTADBIR">Pentadbir</option>
-                    <option value="TAHFIZ">Tahfiz</option>
-                    <option value="AKADEMIK">Akademik</option>
-                 </select>
-               </div>
-               <button type="submit" className="bg-cyan-600 text-white font-bold px-6 py-2 h-11 rounded-xl hover:bg-cyan-700">Tambah Pengguna</button>
-            </form>
-         </div>
-
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200">
                 <thead className="bg-slate-50">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Nama Calon</th>
                     <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">No. KP</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Hafazan</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Tilawah</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Sahsiah</th>
+                    {tahfizItems.map(item => (
+                       <th key={item.id} className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">{item.name}</th>
+                    ))}
                     <th className="px-6 py-4 text-left text-xs font-bold text-emerald-700 uppercase tracking-widest bg-emerald-50">Jumlah</th>
                   </tr>
                 </thead>
@@ -245,9 +208,9 @@ function TahfizView() {
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-5 whitespace-nowrap font-bold text-slate-900">{c.name}</td>
                       <td className="px-6 py-5 whitespace-nowrap font-medium text-slate-500">{c.ic}</td>
-                      <td className="px-6 py-5 whitespace-nowrap font-medium text-slate-700">{c.markahTahfiz?.hafazan}</td>
-                      <td className="px-6 py-5 whitespace-nowrap font-medium text-slate-700">{c.markahTahfiz?.tilawah}</td>
-                      <td className="px-6 py-5 whitespace-nowrap font-medium text-slate-700">{c.markahTahfiz?.sahsiah}</td>
+                      {tahfizItems.map(item => (
+                         <td key={item.id} className="px-6 py-5 whitespace-nowrap font-medium text-slate-700">{c.markahTahfiz?.[item.id] || 0}</td>
+                      ))}
                       <td className="px-6 py-5 whitespace-nowrap font-extrabold text-emerald-600 bg-emerald-50/30 text-lg">{c.markahTahfiz?.jumlah}</td>
                     </tr>
                   ))}
@@ -262,20 +225,22 @@ function TahfizView() {
 
 // ================= AKADEMIK VIEW =================
 
-function AkademikRow({ candidate, updateCandidate, currentUser }: any) {
-  const [markah, setMarkah] = useState({ 
-    bm: candidate.markahAkademik?.bm || 0, 
-    bi: candidate.markahAkademik?.bi || 0, 
-    sains: candidate.markahAkademik?.sains || 0, 
-    matematik: candidate.markahAkademik?.matematik || 0 
+function AkademikRow({ candidate, updateCandidate, currentUser, akademikItems }: any) {
+  const [markah, setMarkah] = useState<Record<string, number>>(() => {
+     const init: Record<string, number> = {};
+     akademikItems.forEach((i: any) => {
+        init[i.id] = candidate.markahAkademik?.[i.id] || 0;
+     });
+     return init;
   });
   const [isSaved, setIsSaved] = useState(!!candidate.markahAkademik);
 
   const handleSave = () => {
+    const jumlah = akademikItems.reduce((acc: number, item: any) => acc + (markah[item.id] || 0), 0);
     updateCandidate(candidate.ic, {
       markahAkademik: {
         ...markah,
-        jumlah: Number(markah.bm) + Number(markah.bi) + Number(markah.sains) + Number(markah.matematik),
+        jumlah,
         dinilaiOleh: currentUser?.name
       }
     });
@@ -293,20 +258,13 @@ function AkademikRow({ candidate, updateCandidate, currentUser }: any) {
         <div className="font-bold text-slate-900">{candidate.name}</div>
         <div className="text-xs text-slate-500">{candidate.ic}</div>
       </td>
-      <td className="px-4 py-3 border-b border-slate-100">
-        <input type="number" min="0" max="25" value={markah.bm || ''} onChange={e => handleChange(e, 'bm')} className="w-16 border-2 border-slate-200 rounded-md p-1 text-center focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold" />
-      </td>
-      <td className="px-4 py-3 border-b border-slate-100">
-        <input type="number" min="0" max="25" value={markah.bi || ''} onChange={e => handleChange(e, 'bi')} className="w-16 border-2 border-slate-200 rounded-md p-1 text-center focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold" />
-      </td>
-      <td className="px-4 py-3 border-b border-slate-100">
-        <input type="number" min="0" max="25" value={markah.sains || ''} onChange={e => handleChange(e, 'sains')} className="w-16 border-2 border-slate-200 rounded-md p-1 text-center focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold" />
-      </td>
-      <td className="px-4 py-3 border-b border-slate-100">
-        <input type="number" min="0" max="25" value={markah.matematik || ''} onChange={e => handleChange(e, 'matematik')} className="w-16 border-2 border-slate-200 rounded-md p-1 text-center focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold" />
-      </td>
+      {akademikItems.map((item: any) => (
+         <td key={item.id} className="px-4 py-3 border-b border-slate-100">
+           <input type="number" min="0" max={item.weight} value={markah[item.id] || ''} onChange={e => handleChange(e, item.id)} className="w-16 border-2 border-slate-200 rounded-md p-1 text-center focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold" />
+         </td>
+      ))}
       <td className="px-4 py-3 border-b border-slate-100 font-extrabold text-emerald-600 bg-emerald-50/30 text-center text-lg">
-        {Number(markah.bm) + Number(markah.bi) + Number(markah.sains) + Number(markah.matematik)}
+        {akademikItems.reduce((acc: number, item: any) => acc + (markah[item.id] || 0), 0)}
       </td>
       <td className="px-4 py-3 border-b border-slate-100 text-center">
         <button 
@@ -321,7 +279,8 @@ function AkademikRow({ candidate, updateCandidate, currentUser }: any) {
 }
 
 function AkademikView() {
-  const { candidates, updateCandidate, currentUser } = useAppContext();
+  const { candidates, updateCandidate, currentUser, settings } = useAppContext();
+  const akademikItems = settings.akademikItems || [];
   
   // Show candidates who have finished Tahfiz interview (have markahTahfiz) and are LAYAK
   const eligibleCandidates = candidates.filter(c => c.statusTemuduga === 'LAYAK' && c.markahTahfiz);
@@ -345,10 +304,9 @@ function AkademikView() {
                 <thead className="bg-slate-100/50">
                    <tr>
                       <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200">Nama Calon & IC</th>
-                      <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">BM (25)</th>
-                      <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">BI (25)</th>
-                      <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Sains (25)</th>
-                      <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Math (25)</th>
+                      {akademikItems.map(item => (
+                         <th key={item.id} className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">{item.name} ({item.weight})</th>
+                      ))}
                       <th className="px-4 py-4 text-xs font-bold text-emerald-700 uppercase tracking-widest border-b border-slate-200 bg-emerald-50/50 text-center">Jumlah</th>
                       <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Tindakan</th>
                    </tr>
@@ -356,14 +314,14 @@ function AkademikView() {
                 <tbody>
                    {eligibleCandidates.length === 0 ? (
                       <tr>
-                         <td colSpan={7} className="px-6 py-12 text-center text-slate-500 font-medium bg-slate-50/30">
+                         <td colSpan={akademikItems.length + 3} className="px-6 py-12 text-center text-slate-500 font-medium bg-slate-50/30">
                             Tiada calon yang telah selesai temuduga Tahfiz buat masa ini.<br/>
                             <span className="text-sm mt-2 inline-block">Sistem hanya memaparkan calon yang LAYAK dan telah mendapat markah Tahfiz.</span>
                          </td>
                       </tr>
                    ) : (
                       eligibleCandidates.map(c => (
-                         <AkademikRow key={c.id} candidate={c} updateCandidate={updateCandidate} currentUser={currentUser} />
+                         <AkademikRow key={c.id} candidate={c} updateCandidate={updateCandidate} currentUser={currentUser} akademikItems={akademikItems} />
                       ))
                    )}
                 </tbody>
@@ -380,6 +338,10 @@ function AnalisisKemasukan({ candidates }: { candidates: any[] }) {
   const permohonan = candidates;
   const permohonanL = permohonan.filter(c => c.jantina?.toUpperCase() === 'LELAKI').length;
   const permohonanP = permohonan.filter(c => c.jantina?.toUpperCase() === 'PEREMPUAN').length;
+
+  const temuduga = candidates.filter(c => c.statusTemuduga === 'LAYAK');
+  const temudugaL = temuduga.filter(c => c.jantina?.toUpperCase() === 'LELAKI').length;
+  const temudugaP = temuduga.filter(c => c.jantina?.toUpperCase() === 'PEREMPUAN').length;
 
   const ditawarkan = candidates.filter(c => c.statusTawaran === 'BERJAYA');
   const ditawarkanL = ditawarkan.filter(c => c.jantina?.toUpperCase() === 'LELAKI').length;
@@ -405,6 +367,11 @@ function AnalisisKemasukan({ candidates }: { candidates: any[] }) {
             <div className="text-slate-500 font-bold mb-2 uppercase tracking-wide text-sm">Jumlah Permohonan</div>
             <div className="text-5xl font-extrabold text-slate-800 mb-2">{permohonan.length}</div>
             <div className="text-slate-500 font-bold">(L: {permohonanL} / P: {permohonanP})</div>
+         </div>
+         <div className="bg-white rounded-2xl p-6 border border-purple-200 shadow-sm text-center flex flex-col justify-center items-center">
+            <div className="text-purple-600 font-bold mb-2 uppercase tracking-wide text-sm">Layak Temuduga</div>
+            <div className="text-5xl font-extrabold text-purple-600 mb-2">{temuduga.length}</div>
+            <div className="text-purple-600/80 font-bold">(L: {temudugaL} / P: {temudugaP})</div>
          </div>
          <div className="bg-white rounded-2xl p-6 border border-blue-200 shadow-sm text-center flex flex-col justify-center items-center">
             <div className="text-blue-600 font-bold mb-2 uppercase tracking-wide text-sm">Jumlah Ditawarkan</div>
@@ -433,8 +400,11 @@ function AnalisisKemasukan({ candidates }: { candidates: any[] }) {
 
 function PentadbirView() {
   const [printCandidate, setPrintCandidate] = useState<Candidate | null>(null);
-  const { candidates } = useAppContext();
+  const { candidates, settings } = useAppContext();
   const [filter, setFilter] = useState('ALL');
+
+  const tahfizTotal = settings.tahfizItems?.reduce((a, b) => a + b.weight, 0) || 100;
+  const akademikTotal = settings.akademikItems?.reduce((a, b) => a + b.weight, 0) || 100;
 
   let filtered = candidates;
   if (filter === 'BERJAYA') filtered = candidates.filter(c => c.statusTawaran === 'BERJAYA');
@@ -487,18 +457,18 @@ function PentadbirView() {
        </div>
 
 
-       <div className="mb-8 flex gap-3 overflow-x-auto pb-4 custom-scrollbar">
-         {['ALL', 'BERJAYA', 'GAGAL', 'TERIMA', 'TOLAK'].map(f => (
-           <button 
-             key={f}
-             onClick={() => setFilter(f)}
-             className={`px-6 py-3 rounded-xl text-sm font-bold whitespace-nowrap border-2 transition-all duration-300 shadow-sm ${
-               filter === f ? 'bg-purple-100 border-purple-300 text-purple-800 shadow-purple-200/50' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
-             }`}
-           >
-             {f === 'ALL' ? 'Semua Calon' : f}
-           </button>
-         ))}
+       <div className="mb-8">
+         <select 
+           value={filter}
+           onChange={(e) => setFilter(e.target.value)}
+           className="px-6 py-3 rounded-xl text-sm font-bold border-2 border-slate-200 bg-white text-slate-800 shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 min-w-[200px]"
+         >
+           <option value="ALL">Semua Calon</option>
+           <option value="BERJAYA">Tawaran Berjaya</option>
+           <option value="GAGAL">Tawaran Gagal</option>
+           <option value="TERIMA">Terima Tawaran</option>
+           <option value="TOLAK">Tolak Tawaran</option>
+         </select>
        </div>
 
        <div className="overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm">
@@ -523,11 +493,11 @@ function PentadbirView() {
                     </td>
                     <td className="px-6 py-5 font-medium text-slate-600 truncate max-w-[150px]">{c.namaSekolahRendah}</td>
                     <td className="px-6 py-5">
-                       {c.markahTahfiz ? <span className="font-extrabold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-md">{c.markahTahfiz.jumlah}/100</span> : <span className="text-sm font-medium text-slate-400">Belum Dinilai</span>}
+                       {c.markahTahfiz ? <span className="font-extrabold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-md">{c.markahTahfiz.jumlah}/{tahfizTotal}</span> : <span className="text-sm font-medium text-slate-400">Belum Dinilai</span>}
                        {c.markahTahfiz?.dinilaiOleh && <div className="text-[10px] text-slate-400 mt-1 uppercase">Oleh: {c.markahTahfiz.dinilaiOleh}</div>}
                     </td>
                     <td className="px-6 py-5">
-                       {c.markahAkademik ? <span className="font-extrabold text-blue-600 bg-blue-50 px-3 py-1 rounded-md">{c.markahAkademik.jumlah}/100</span> : <span className="text-sm font-medium text-slate-400">Belum Dinilai</span>}
+                       {c.markahAkademik ? <span className="font-extrabold text-blue-600 bg-blue-50 px-3 py-1 rounded-md">{c.markahAkademik.jumlah}/{akademikTotal}</span> : <span className="text-sm font-medium text-slate-400">Belum Dinilai</span>}
                        {c.markahAkademik?.dinilaiOleh && <div className="text-[10px] text-slate-400 mt-1 uppercase">Oleh: {c.markahAkademik.dinilaiOleh}</div>}
                     </td>
                     <td className="px-6 py-5">
@@ -613,9 +583,10 @@ function SuperAdminView() {
     <div className="space-y-8">
        <div className="flex gap-4 border-b border-slate-200 pb-4 overflow-x-auto custom-scrollbar">
          <button onClick={() => setActiveTab('KAWALAN')} className={`px-6 py-3 font-bold rounded-xl whitespace-nowrap ${activeTab === 'KAWALAN' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Kawalan Sistem</button>
-         <button onClick={() => setActiveTab('PENGGUNA')} className={`px-6 py-3 font-bold rounded-xl whitespace-nowrap ${activeTab === 'PENGGUNA' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Pengguna (Admin)</button>
-         <button onClick={() => setActiveTab('PERMOHONAN')} className={`px-6 py-3 font-bold rounded-xl whitespace-nowrap ${activeTab === 'PERMOHONAN' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Senarai Permohonan</button>
-         <button onClick={() => setActiveTab('MARKAH')} className={`px-6 py-3 font-bold rounded-xl whitespace-nowrap ${activeTab === 'MARKAH' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Dashboard Markah</button>
+         <button onClick={() => setActiveTab('PENGGUNA')} className={`px-6 py-3 font-bold rounded-xl whitespace-nowrap ${activeTab === 'PENGGUNA' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Daftar Pengguna</button>
+         <button onClick={() => setActiveTab('PENILAIAN' as any)} className={`px-6 py-3 font-bold rounded-xl whitespace-nowrap ${activeTab === 'PENILAIAN' as any ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Penilaian</button>
+         <button onClick={() => setActiveTab('PERMOHONAN')} className={`px-6 py-3 font-bold rounded-xl whitespace-nowrap ${activeTab === 'PERMOHONAN' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Senarai Pemohon</button>
+         <button onClick={() => setActiveTab('MARKAH')} className={`px-6 py-3 font-bold rounded-xl whitespace-nowrap ${activeTab === 'MARKAH' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Keputusan</button>
        </div>
 
        {activeTab === 'KAWALAN' && (
@@ -659,17 +630,56 @@ function SuperAdminView() {
            </div>
 
            <div>
-             <h3 className="text-xl font-bold mb-6 flex items-center gap-3"><LinkIcon className="w-6 h-6 text-slate-500" /> Pengurusan Pautan (Links)</h3>
-             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6">
+             <h3 className="text-xl font-bold mb-6 flex items-center gap-3"><LinkIcon className="w-6 h-6 text-slate-500" /> Pengurusan Maklumat Paparan & Infografik</h3>
+             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                   <label className="block text-sm font-bold text-slate-700 mb-2">Link Borang Pendaftaran Tingkatan 1 (Bagi yang berjaya)</label>
-                   <input type="url" value={settings.borangTingkatan1Link || ''} onChange={e=>handleTextSettings('borangTingkatan1Link', e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-3" placeholder="Contoh: https://forms.gle/..." />
+                   <label className="block text-sm font-bold text-slate-700 mb-2">Maklumat Dashboard Utama (Teks)</label>
+                   <textarea rows={6} value={settings.utamaContent || ''} onChange={e=>handleTextSettings('utamaContent', e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-3" placeholder="Masukkan teks pengenalan di laman Utama..."></textarea>
                 </div>
                 <div>
-                   <label className="block text-sm font-bold text-slate-700 mb-2">Link Edit Maklumat Utama / Panduan</label>
-                   <input type="url" value={settings.utamaPanduanLink || ''} onChange={e=>handleTextSettings('utamaPanduanLink', e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-3" placeholder="Contoh: https://docs.google.com/..." />
-                   <p className="text-xs text-slate-500 mt-2">Pautan luaran untuk rujukan/kemaskini maklumat asas oleh admin.</p>
+                   <label className="block text-sm font-bold text-slate-700 mb-2">Maklumat Panduan Permohonan (Teks)</label>
+                   <textarea rows={6} value={settings.panduanContent || ''} onChange={e=>handleTextSettings('panduanContent', e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-3" placeholder="Masukkan teks panduan tambahan..."></textarea>
                 </div>
+             </div>
+
+             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-6">
+                 <h4 className="font-bold text-slate-800 mb-4">Muat Naik Gambar / Infografik Panduan</h4>
+                 <form onSubmit={(e) => {
+                     e.preventDefault();
+                     const fd = new FormData(e.currentTarget);
+                     const title = fd.get('title') as string;
+                     const file = (fd.get('image') as File);
+                     if (title && file && file.size > 0) {
+                         const reader = new FileReader();
+                         reader.onloadend = () => {
+                             addInfographic({ id: Math.random().toString(36).substring(7), title, url: reader.result as string });
+                         };
+                         reader.readAsDataURL(file);
+                     }
+                     e.currentTarget.reset();
+                 }} className="flex gap-4 items-end">
+                     <div className="flex-1">
+                         <label className="block text-xs font-bold text-slate-500 mb-1">Tajuk Gambar</label>
+                         <input type="text" name="title" required className="w-full border border-slate-300 rounded-lg px-3 py-2" />
+                     </div>
+                     <div className="flex-1">
+                         <label className="block text-xs font-bold text-slate-500 mb-1">Pilih Fail Imej</label>
+                         <input type="file" name="image" accept="image/*" required className="w-full border border-slate-300 rounded-lg px-3 py-1.5 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:bg-emerald-50 file:text-emerald-700" />
+                     </div>
+                     <button type="submit" className="bg-emerald-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-emerald-700">Muat Naik</button>
+                 </form>
+
+                 <div className="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                   {infographics?.map(info => (
+                     <div key={info.id} className="relative rounded-xl overflow-hidden border border-slate-200 shadow-sm group">
+                       <img src={info.url} alt={info.title} className="w-full h-32 object-cover bg-slate-50" />
+                       <div className="p-2 bg-white text-center">
+                         <h4 className="text-xs font-bold text-slate-800 truncate">{info.title}</h4>
+                       </div>
+                       <button onClick={() => deleteInfographic(info.id)} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><XCircle className="w-4 h-4" /></button>
+                     </div>
+                   ))}
+                 </div>
              </div>
            </div>
 
@@ -783,6 +793,10 @@ function SuperAdminView() {
                 </div>
              </div>
           </div>
+       )}
+
+       {activeTab === 'PENILAIAN' as any && (
+          <PenilaianView />
        )}
 
        {activeTab === 'PERMOHONAN' && (

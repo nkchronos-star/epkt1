@@ -2,7 +2,7 @@ import { Info, CheckCircle, FileText, Calendar } from 'lucide-react';
 import { useAppContext } from '../../store';
 
 export default function Panduan() {
-  const { infographics } = useAppContext();
+  const { infographics, settings } = useAppContext();
 
   return (
     <div className="animate-in fade-in duration-500 py-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
@@ -23,6 +23,11 @@ export default function Panduan() {
         </div>
         
         <div className="p-8 md:p-12">
+          {settings.panduanContent ? (
+              <div className="whitespace-pre-wrap text-slate-700 leading-relaxed font-medium">
+                  {settings.panduanContent}
+              </div>
+          ) : (
           <div className="relative border-l-[3px] border-slate-100 ml-4 md:ml-8 space-y-14">
             
             <div className="relative pl-10 md:pl-12 group">
@@ -58,6 +63,7 @@ export default function Panduan() {
             </div>
 
           </div>
+          )}
         </div>
       </div>
 

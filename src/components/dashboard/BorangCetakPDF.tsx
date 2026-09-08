@@ -84,7 +84,6 @@ export function BorangCetakPDF({ candidate, onClose }: { candidate: Candidate, o
                             <div><span className="block text-slate-500 text-xs">No. Kad Pengenalan</span> <span className="font-bold">{candidate.icBapa || '-'}</span></div>
                             <div><span className="block text-slate-500 text-xs">No. Telefon</span> <span className="font-bold">{candidate.telefonBapa || '-'}</span></div>
                             <div><span className="block text-slate-500 text-xs">Pekerjaan</span> <span className="font-bold uppercase">{candidate.pekerjaanBapa || '-'}</span></div>
-                            <div><span className="block text-slate-500 text-xs">Pendapatan (RM)</span> <span className="font-bold">{candidate.pendapatanBapa || '-'}</span></div>
                         </div>
                     </div>
                     <div>
@@ -94,7 +93,6 @@ export function BorangCetakPDF({ candidate, onClose }: { candidate: Candidate, o
                             <div><span className="block text-slate-500 text-xs">No. Kad Pengenalan</span> <span className="font-bold">{candidate.icIbu || '-'}</span></div>
                             <div><span className="block text-slate-500 text-xs">No. Telefon</span> <span className="font-bold">{candidate.telefonIbu || '-'}</span></div>
                             <div><span className="block text-slate-500 text-xs">Pekerjaan</span> <span className="font-bold uppercase">{candidate.pekerjaanIbu || '-'}</span></div>
-                            <div><span className="block text-slate-500 text-xs">Pendapatan (RM)</span> <span className="font-bold">{candidate.pendapatanIbu || '-'}</span></div>
                         </div>
                     </div>
                 </div>
@@ -124,7 +122,14 @@ export function BorangCetakPDF({ candidate, onClose }: { candidate: Candidate, o
                         </div>
                         <div className="col-span-2 mt-4 pt-4 border-t border-slate-100">
                            <span className="block text-slate-500 font-bold mb-2">Keputusan UPKK</span>
-                           <span className="text-xl font-black text-slate-900">{candidate.upkk || '-'}</span>
+                           <ul className="grid grid-cols-2 gap-2">
+                             <li>Al-Quran: <span className="font-bold">{candidate.upkk?.alquran || '-'}</span></li>
+                             <li>Akidah: <span className="font-bold">{candidate.upkk?.akidah || '-'}</span></li>
+                             <li>Sirah: <span className="font-bold">{candidate.upkk?.sirah || '-'}</span></li>
+                             <li>Adab: <span className="font-bold">{candidate.upkk?.adab || '-'}</span></li>
+                             <li>Jawi & Khat: <span className="font-bold">{candidate.upkk?.jawikhat || '-'}</span></li>
+                             <li>Bahasa Arab: <span className="font-bold">{candidate.upkk?.bahasaarab || '-'}</span></li>
+                           </ul>
                         </div>
                     </div>
                   </section>

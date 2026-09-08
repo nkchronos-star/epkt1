@@ -15,16 +15,22 @@ export default function Utama({ onNavigate }: UtamaProps) {
       <div className="bg-white rounded-xl shadow-sm border border-emerald-100 border-t-[6px] border-t-emerald-700 p-6 md:p-8">
         <h2 className="text-2xl font-bold text-slate-800 mb-6">Pengenalan</h2>
         <div className="text-slate-600 space-y-4 leading-relaxed text-sm">
-          <p>
-            Matlamat utama pelaksanaan Kurikulum Bersepadu Tahfiz (KBT) di SMAG3 adalah untuk melahirkan golongan profesional, teknokrat dan usahawan hafiz yang mengamalkan ajaran Islam (mutadayyin) dan memiliki pelbagai kemahiran ilmu selaras dengan Falsafah Pendidikan Negara.
-          </p>
-          <p className="font-bold text-slate-800 pt-2">Pelaksanaan KBT diharap dapat melahirkan:</p>
-          <ol className="list-decimal list-outside ml-5 space-y-2">
-            <li>Menghafaz 30 juzuk Al-Quran.</li>
-            <li>Profesional dengan asas keagamaan mantap berlandaskan Al-Quran dan Al-Sunnah.</li>
-            <li>Memaksimumkan keupayaan berfikir aras tinggi, kreatif dan inovatif.</li>
-            <li>Hubungan baik dengan Allah, manusia dan alam sekitar.</li>
-          </ol>
+          {settings.utamaContent ? (
+              <div className="whitespace-pre-wrap">{settings.utamaContent}</div>
+          ) : (
+              <>
+                <p>
+                  Matlamat utama pelaksanaan Kurikulum Bersepadu Tahfiz (KBT) di SMAG3 adalah untuk melahirkan golongan profesional, teknokrat dan usahawan hafiz yang mengamalkan ajaran Islam (mutadayyin) dan memiliki pelbagai kemahiran ilmu selaras dengan Falsafah Pendidikan Negara.
+                </p>
+                <p className="font-bold text-slate-800 pt-2">Pelaksanaan KBT diharap dapat melahirkan:</p>
+                <ol className="list-decimal list-outside ml-5 space-y-2">
+                  <li>Menghafaz 30 juzuk Al-Quran.</li>
+                  <li>Profesional dengan asas keagamaan mantap berlandaskan Al-Quran dan Al-Sunnah.</li>
+                  <li>Memaksimumkan keupayaan berfikir aras tinggi, kreatif dan inovatif.</li>
+                  <li>Hubungan baik dengan Allah, manusia dan alam sekitar.</li>
+                </ol>
+              </>
+          )}
         </div>
       </div>
 
@@ -66,14 +72,6 @@ export default function Utama({ onNavigate }: UtamaProps) {
       </div>
 
       {/* Subjects Section */}
-      {settings.utamaPanduanLink && (
-         <div className="flex justify-end mt-4 mb-8">
-            <a href={settings.utamaPanduanLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-lg font-bold text-sm border border-blue-200 transition-colors">
-               <ExternalLink className="w-4 h-4" />
-               Edit Maklumat Utama & Panduan (Admin)
-            </a>
-         </div>
-      )}
       <h2 className="text-2xl font-bold text-slate-800 mt-12 mb-6">Mata Pelajaran Ditawarkan</h2>
       <div className="grid md:grid-cols-2 gap-8">
         {/* Menengah Bawah */}
