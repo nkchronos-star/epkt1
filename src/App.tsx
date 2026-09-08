@@ -30,22 +30,16 @@ function AppContent() {
     <div className="min-h-screen flex flex-col bg-[#f4f7ee] text-slate-800 font-sans selection:bg-emerald-100 selection:text-emerald-900">
       
       {/* Top Header */}
-      <header className="bg-[#0c6b4b] text-white print:hidden">
+      <header className="bg-[#0c6b4b] text-white print:hidden shadow-sm">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="bg-white p-1 rounded-full w-14 h-14 flex items-center justify-center shrink-0">
-               <img src="https://i.postimg.cc/mrcDcHn3/logo-sma-cantik.png" alt="Logo SMAG3" className="h-11 w-auto object-contain" />
+          <div className="flex items-center gap-4 md:gap-6">
+            <div className="bg-white p-1 rounded-full w-16 h-16 md:w-20 md:h-20 flex items-center justify-center shrink-0 shadow-lg">
+               <img src="https://i.postimg.cc/mrcDcHn3/logo-sma-cantik.png" alt="Logo SMAG3" className="h-12 md:h-16 w-auto object-contain" />
             </div>
             <div>
-              <h1 className="font-bold text-xl md:text-2xl tracking-wide uppercase">SMA KOTA GELANGGI 3</h1>
-              <p className="text-emerald-100/90 text-sm">27000 Jerantut, Pahang</p>
+              <h1 className="font-black text-2xl md:text-3xl lg:text-4xl tracking-tight uppercase drop-shadow-sm">SMA KOTA GELANGGI 3</h1>
+              <p className="text-emerald-100 font-bold text-xs md:text-lg tracking-widest uppercase mt-1 drop-shadow-sm">Sistem Permohonan Tingkatan 1</p>
             </div>
-          </div>
-          
-          <div className="hidden md:flex items-center">
-            <span className="bg-white/10 border border-white/20 px-4 py-2 rounded-md font-medium text-sm">
-              {sesiKemasukan}
-            </span>
           </div>
 
           <button 

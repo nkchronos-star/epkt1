@@ -103,125 +103,262 @@ export default function AdminPanel() {
 function TahfizView() {
   const { candidates, updateCandidate, currentUser, settings } = useAppContext();
   const [selectedCandidate, setSelectedCandidate] = useState('');
+  const [activeTab, setActiveTab] = useState<'NILAI' | 'SENARAI'>('NILAI');
+  const [markah, setMarkah] = useState<Record<string, number>>({});
+  const [catatan, setCatatan] = useState('');
+
+  const items = settings.tahfizItems || [];
   
-  // Only show candidates who are LAYAK temuduga and haven't been marked by Tahfiz yet
-  const pendingCandidates = candidates.filter(c => c.statusTemuduga === 'LAYAK' && !c.markahTahfiz);
+  const isSameDay = (dateStr?: string) => {
+    if (!dateStr) return false;
+    return new Date(dateStr).toDateString() === new Date().toDateString();
+  };
+
+  const pendingCandidates = candidates.filter(c => 
+    c.statusTemuduga === 'LAYAK' && 
+    !c.markahTahfiz
+  );
+
+  const evaluatedCandidates = candidates.filter(c => c.markahTahfiz?.dinilaiOleh === currentUser?.name);
   const currentC = candidates.find(c => c.ic === selectedCandidate);
 
-  const tahfizItems = settings.tahfizItems || [];
-  const [markah, setMarkah] = useState<Record<string, number>>({});
+  useEffect(() => {
+    if (currentC && currentC.markahTahfiz) {
+      setMarkah(currentC.markahTahfiz);
+      setCatatan(currentC.markahTahfiz?.catatan || '');
+    } else {
+      setMarkah({});
+      setCatatan('');
+    }
+  }, [currentC]);
+
+
+  const handleMarkahChange = (e: React.ChangeEvent<HTMLInputElement>, itemId: string, maxWeight: number, itemName: string) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val)) {
+      const newMarkah = {...markah};
+      delete newMarkah[itemId];
+      setMarkah(newMarkah);
+      return;
+    }
+    if (val > maxWeight) {
+      alert(`Amaran: Markah ${itemName} tidak boleh melebihi peruntukan markah maksimum (${maxWeight} markah).`);
+      val = maxWeight;
+    } else if (val < 0) {
+      val = 0;
+    }
+    setMarkah({...markah, [itemId]: val});
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
+
     e.preventDefault();
     if (!currentC) return;
     
-    const jumlah = tahfizItems.reduce((acc, item) => acc + (markah[item.id] || 0), 0);
+    const jumlah = items.reduce((acc, item) => acc + (markah[item.id] || 0), 0);
+    
     updateCandidate(currentC.ic, {
       markahTahfiz: {
         ...markah,
         jumlah,
-        dinilaiOleh: currentUser?.name
+        dinilaiOleh: currentUser?.name,
+        tarikhDinilai: currentC.markahTahfiz?.tarikhDinilai || new Date().toISOString(),
+        catatan
       }
     });
-    alert('Markah berjaya disimpan!');
+    alert('Penilaian Tahfiz berjaya disimpan!');
     setSelectedCandidate('');
     setMarkah({});
+    setCatatan('');
+  };
+
+  const handleEdit = (ic: string) => {
+    setActiveTab('NILAI');
+    setSelectedCandidate(ic);
   };
 
   return (
-    <div>
-       <div className="flex items-center gap-4 border-b border-slate-100 pb-6 mb-8">
-         <div className="p-3 bg-emerald-100 rounded-xl">
-           <FileSignature className="w-7 h-7 text-emerald-700" />
+    <div className="animate-in fade-in">
+       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 mb-8">
+         <div className="flex items-center gap-4">
+           <div className="p-3 bg-emerald-100 rounded-xl">
+             <FileSignature className="w-7 h-7 text-emerald-700" />
+           </div>
+           <div>
+             <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">Penilaian Temuduga (Tahfiz)</h3>
+             <p className="text-sm font-medium text-slate-500">Pilih calon dan masukkan markah serta ulasan</p>
+           </div>
          </div>
-         <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">Penilaian Temuduga (Tahfiz)</h3>
-         <span className="ml-auto font-bold text-slate-500 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">{new Date().toLocaleDateString('ms-MY')}</span>
+         <span className="font-bold text-slate-500 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">{new Date().toLocaleDateString('ms-MY')}</span>
        </div>
 
-       <div className="max-w-3xl">
-         <div className="mb-10 bg-slate-50 p-6 rounded-2xl border border-slate-200/60">
-           <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide">Pilih Calon Penilaian</label>
-           <select 
-             className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-300 font-medium text-slate-800 bg-white shadow-sm appearance-none"
-             value={selectedCandidate}
-             onChange={(e) => setSelectedCandidate(e.target.value)}
-           >
-             <option value="">-- Pilih Calon --</option>
-             {pendingCandidates.map(c => (
-               <option key={c.id} value={c.ic}>{c.name} ({c.ic})</option>
-             ))}
-           </select>
-           {pendingCandidates.length === 0 && (
-             <p className="text-sm font-bold text-amber-700 mt-3 bg-amber-50 px-4 py-2 rounded-lg inline-block border border-amber-200">Tiada calon yang perlu dinilai buat masa ini.</p>
+       <div className="flex gap-4 mb-8 border-b border-slate-200 pb-2 overflow-x-auto">
+         <button onClick={() => setActiveTab('NILAI')} className={`px-6 py-3 rounded-t-xl font-bold transition-all whitespace-nowrap ${activeTab === 'NILAI' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>1. Menilai Calon</button>
+         <button onClick={() => setActiveTab('SENARAI')} className={`px-6 py-3 rounded-t-xl font-bold transition-all whitespace-nowrap ${activeTab === 'SENARAI' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>2. Senarai Calon Dinilai</button>
+       </div>
+
+       {activeTab === 'NILAI' && (
+         <div className="max-w-4xl animate-in fade-in">
+           <div className="mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-200/60">
+             <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide">Pilih Calon Penilaian</label>
+             <select 
+               className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:ring-4 transition-all duration-300 font-medium text-slate-800 bg-white shadow-sm appearance-none focus:ring-emerald-500/20 focus:border-emerald-500"
+               value={selectedCandidate}
+               onChange={(e) => setSelectedCandidate(e.target.value)}
+             >
+               <option value="">-- Pilih Calon --</option>
+               {pendingCandidates.map(c => (
+                 <option key={c.id} value={c.ic}>{c.name} ({c.ic}) </option>
+               ))}
+             </select>
+             {pendingCandidates.length === 0 && (
+               <p className="text-sm font-bold text-amber-700 mt-3 bg-amber-50 px-4 py-2 rounded-lg inline-block border border-amber-200">Tiada calon baru untuk dinilai.</p>
+             )}
+           </div>
+
+           {currentC && (
+             <div className="bg-emerald-50/50 rounded-[2rem] p-8 border-2 border-emerald-100 animate-in fade-in slide-in-from-top-4 shadow-xl shadow-emerald-100/30">
+               <div className="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-emerald-100/50 flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+                 {currentC.gambarUrl ? (
+                   <img src={currentC.gambarUrl} alt={currentC.name} className="w-24 h-32 object-cover rounded-xl border-2 border-slate-200 shadow-sm" />
+                 ) : (
+                   <div className="w-24 h-32 bg-slate-100 rounded-xl border-2 border-slate-200 flex flex-col items-center justify-center text-slate-400">
+                     <Users className="w-8 h-8 mb-1" />
+                     <span className="text-[10px] font-bold uppercase">Tiada Gambar</span>
+                   </div>
+                 )}
+                 <div className="flex-1">
+                   <span className="text-sm font-bold text-slate-500 uppercase tracking-widest block mb-1">Maklumat Calon:</span>
+                   <span className="font-extrabold text-2xl text-slate-900 block mb-2">{currentC.name}</span>
+                   <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                     <span className="font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 inline-flex items-center gap-2">IC: {currentC.ic}</span>
+                     <span className="font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 inline-flex items-center gap-2">Jantina: {currentC.jantina || '-'}</span>
+                   </div>
+                 </div>
+               </div>
+               
+               <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {items.map((item) => (
+                        <div key={item.id}>
+                          <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">{item.name} ({item.weight} markah)</label>
+                          <input type="number" max={item.weight} min="0" required value={markah[item.id] !== undefined ? markah[item.id] : ''} onChange={e => handleMarkahChange(e, item.id, item.weight, item.name)} className="w-full p-4 rounded-xl border-2 bg-white font-bold text-lg text-slate-800 transition-all border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20" />
+                        </div>
+                    ))}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Jumlah Keseluruhan</label>
+                      <input type="text" readOnly value={items.reduce((acc, item) => acc + (markah[item.id] || 0), 0)} className="w-full p-4 rounded-xl border-2 border-slate-200 bg-slate-100/80 font-extrabold text-xl text-slate-900" />
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2">
+                    <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Ulasan / Catatan Penilai</label>
+                    <textarea 
+                      rows={3} 
+                      value={catatan} 
+                      onChange={e => setCatatan(e.target.value)} 
+                      placeholder="Masukkan ulasan untuk calon ini (pilihan)"
+                      className="w-full p-4 rounded-xl border-2 bg-white font-medium text-slate-700 transition-all border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20" 
+                    />
+                  </div>
+
+                  <div className="pt-6 flex justify-end">
+                    <button type="submit" className="text-white px-8 py-4 rounded-xl font-bold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-lg w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30">Simpan Maklumat Penilaian</button>
+                  </div>
+               </form>
+             </div>
            )}
          </div>
+       )}
 
-         {currentC && (
-           <div className="bg-emerald-50/50 rounded-[2rem] p-8 border-2 border-emerald-100 animate-in fade-in slide-in-from-top-4 shadow-xl shadow-emerald-100/30">
-             <div className="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-emerald-100/50">
-                <span className="text-sm font-bold text-slate-500 uppercase tracking-widest block mb-1">Maklumat Calon:</span>
-                <span className="font-extrabold text-2xl text-slate-900 block mb-1">{currentC.name}</span>
-                <span className="font-medium text-slate-500 bg-slate-50 px-3 py-1 rounded-md inline-block">{currentC.ic}</span>
-             </div>
-             
-             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {tahfizItems.map((item) => (
-                      <div key={item.id}>
-                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">{item.name} ({item.weight} markah)</label>
-                        <input type="number" max={item.weight} min="0" required value={markah[item.id] || ''} onChange={e=>setMarkah({...markah, [item.id]: Number(e.target.value)})} className="w-full p-4 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 bg-white font-bold text-lg text-slate-800 transition-all" />
-                      </div>
-                  ))}
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Jumlah Keseluruhan</label>
-                    <input type="text" readOnly value={tahfizItems.reduce((acc, item) => acc + (markah[item.id] || 0), 0)} className="w-full p-4 rounded-xl border-2 border-slate-200 bg-slate-100 font-extrabold text-xl text-slate-900" />
-                  </div>
-                </div>
-                <div className="pt-6 flex justify-end">
-                  <button type="submit" className="bg-emerald-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-emerald-700 shadow-lg shadow-emerald-600/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-lg w-full sm:w-auto">Simpan Markah</button>
-                </div>
-             </form>
+       {activeTab === 'SENARAI' && (
+         <div className="animate-in fade-in">
+           <div className="mb-6 flex items-start gap-3 p-4 bg-amber-50 rounded-xl border border-amber-200 text-amber-800">
+             <div className="p-1 bg-amber-100 rounded-lg shrink-0 mt-0.5"><CheckSquare className="w-5 h-5 text-amber-700" /></div>
+             <span className="font-medium text-sm leading-relaxed">
+               Peringatan: Anda hanya boleh mengemaskini (edit) markah dan ulasan bagi calon yang dinilai pada <strong>hari ini sahaja</strong>. Markah pada hari sebelumnya telah dikunci dan hanya boleh diubah oleh Pentadbir atas faktor keselamatan.
+             </span>
            </div>
-         )}
-       </div>
 
-       <div className="mt-16">
-          <h4 className="text-xl font-extrabold text-slate-800 mb-6 border-b border-slate-100 pb-4">Calon Yang Telah Dinilai Oleh Anda Hari Ini</h4>
-          <div className="overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Nama Calon</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">No. KP</th>
-                    {tahfizItems.map(item => (
-                       <th key={item.id} className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">{item.name}</th>
-                    ))}
-                    <th className="px-6 py-4 text-left text-xs font-bold text-emerald-700 uppercase tracking-widest bg-emerald-50">Jumlah</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-slate-100">
-                  {candidates.filter(c => c.markahTahfiz?.dinilaiOleh === currentUser?.name).map(c => (
-                    <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-5 whitespace-nowrap font-bold text-slate-900">{c.name}</td>
-                      <td className="px-6 py-5 whitespace-nowrap font-medium text-slate-500">{c.ic}</td>
-                      {tahfizItems.map(item => (
-                         <td key={item.id} className="px-6 py-5 whitespace-nowrap font-medium text-slate-700">{c.markahTahfiz?.[item.id] || 0}</td>
-                      ))}
-                      <td className="px-6 py-5 whitespace-nowrap font-extrabold text-emerald-600 bg-emerald-50/30 text-lg">{c.markahTahfiz?.jumlah}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-       </div>
+           <div className="overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm">
+             <div className="overflow-x-auto">
+               <table className="min-w-full divide-y divide-slate-200">
+                 <thead className="bg-slate-50">
+                   <tr>
+                     <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Gambar</th>
+                     <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">Maklumat Calon</th>
+                     <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest max-w-[200px]">Ulasan</th>
+                     {items.map((item: any) => (
+                       <th key={item.id} className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">{item.name}</th>
+                     ))}
+                     <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50">Jumlah</th>
+                     <th className="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">Tindakan</th>
+                   </tr>
+                 </thead>
+                 <tbody className="bg-white divide-y divide-slate-100">
+                   {evaluatedCandidates.length === 0 ? (
+                     <tr>
+                       <td colSpan={5 + items.length} className="px-6 py-12 text-center text-slate-500 font-medium">Tiada rekod penilaian setakat ini.</td>
+                     </tr>
+                   ) : (
+                     evaluatedCandidates.map(c => {
+                       const canEdit = isSameDay(c.markahTahfiz?.tarikhDinilai);
+                       return (
+                         <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                           <td className="px-6 py-4 whitespace-nowrap">
+                             {c.gambarUrl ? (
+                               <img src={c.gambarUrl} alt={c.name} className="w-12 h-16 rounded-lg object-cover border border-slate-200" />
+                             ) : (
+                               <div className="w-12 h-16 rounded-lg bg-slate-100 border border-slate-200 flex flex-col items-center justify-center text-slate-400">
+                                 <Users className="w-5 h-5 mb-1" />
+                               </div>
+                             )}
+                           </td>
+                           <td className="px-6 py-4">
+                             <div className="font-bold text-slate-900">{c.name}</div>
+                             <div className="text-sm font-medium text-slate-500 mt-1">{c.ic}</div>
+                             <div className="text-xs text-slate-400 mt-1">{new Date(c.markahTahfiz?.tarikhDinilai || '').toLocaleDateString('ms-MY')}</div>
+                           </td>
+                           <td className="px-6 py-4">
+                             <p className="text-sm text-slate-600 line-clamp-3" title={c.markahTahfiz?.catatan}>{c.markahTahfiz?.catatan || '-'}</p>
+                           </td>
+                           {items.map((item: any) => (
+                             <td key={item.id} className="px-6 py-4 whitespace-nowrap text-center font-bold text-slate-700">
+                               {c.markahTahfiz?.[item.id] || 0}
+                             </td>
+                           ))}
+                           <td className="px-6 py-4 whitespace-nowrap font-extrabold text-2xl text-center text-emerald-600 bg-emerald-50/30">{c.markahTahfiz?.jumlah}</td>
+                           <td className="px-6 py-4 whitespace-nowrap text-center">
+                             {canEdit ? (
+                               <button 
+                                 onClick={() => handleEdit(c.ic)} 
+                                 className="px-4 py-2 font-bold text-sm rounded-lg transition-colors border shadow-sm bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
+                               >
+                                 Kemaskini
+                               </button>
+                             ) : (
+                               <div className="flex flex-col items-center gap-1">
+                                 <Lock className="w-4 h-4 text-slate-400" />
+                                 <span className="text-[10px] font-bold text-slate-400 uppercase">Terkunci</span>
+                               </div>
+                             )}
+                           </td>
+                         </tr>
+                       );
+                     })
+                   )}
+                 </tbody>
+               </table>
+             </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 }
 
-// ================= AKADEMIK VIEW =================
 
+// ================= AKADEMIK VIEW =================
 function AkademikRow({ candidate, updateCandidate, currentUser, akademikItems }: any) {
   const [markah, setMarkah] = useState<Record<string, number>>(() => {
      const init: Record<string, number> = {};
@@ -238,35 +375,57 @@ function AkademikRow({ candidate, updateCandidate, currentUser, akademikItems }:
       markahAkademik: {
         ...markah,
         jumlah,
-        dinilaiOleh: currentUser?.name
+        dinilaiOleh: currentUser?.name,
+        tarikhDinilai: new Date().toISOString()
       }
     });
     setIsSaved(true);
   };
 
-  const handleChange = (e: any, field: string) => {
-    setMarkah(prev => ({ ...prev, [field]: Number(e.target.value) }));
+  const handleChange = (e: any, field: string, maxWeight: number, itemName: string) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val)) {
+      const newMarkah = {...markah};
+      delete newMarkah[field];
+      setMarkah(newMarkah);
+      setIsSaved(false);
+      return;
+    }
+    if (val > maxWeight) {
+      alert(`Amaran: Markah ${itemName} tidak boleh melebihi peruntukan markah maksimum (${maxWeight} markah).`);
+      val = maxWeight;
+    } else if (val < 0) {
+      val = 0;
+    }
+    setMarkah(prev => ({ ...prev, [field]: val }));
     setIsSaved(false);
   };
 
   return (
-    <tr className="hover:bg-slate-50 transition-colors">
+    <tr className="hover:bg-blue-50/30 transition-colors">
       <td className="px-4 py-3 border-b border-slate-100">
         <div className="font-bold text-slate-900">{candidate.name}</div>
-        <div className="text-xs text-slate-500">{candidate.ic}</div>
+        <div className="text-xs font-medium text-slate-500 mt-1">{candidate.ic}</div>
       </td>
       {akademikItems.map((item: any) => (
-         <td key={item.id} className="px-4 py-3 border-b border-slate-100">
-           <input type="number" min="0" max={item.weight} value={markah[item.id] || ''} onChange={e => handleChange(e, item.id)} className="w-16 border-2 border-slate-200 rounded-md p-1 text-center focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 font-bold" />
+         <td key={item.id} className="px-4 py-3 border-b border-slate-100 text-center">
+           <input 
+             type="number" 
+             min="0" 
+             max={item.weight} 
+             value={markah[item.id] !== undefined ? markah[item.id] : ''} 
+             onChange={e => handleChange(e, item.id, item.weight, item.name)} 
+             className={`w-16 border-2 border-slate-200 rounded-md p-2 text-center focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-bold ${isSaved ? 'bg-slate-50' : 'bg-white'}`} 
+           />
          </td>
       ))}
-      <td className="px-4 py-3 border-b border-slate-100 font-extrabold text-emerald-600 bg-emerald-50/30 text-center text-lg">
+      <td className="px-4 py-3 border-b border-slate-100 font-extrabold text-blue-700 bg-blue-50/50 text-center text-lg">
         {akademikItems.reduce((acc: number, item: any) => acc + (markah[item.id] || 0), 0)}
       </td>
       <td className="px-4 py-3 border-b border-slate-100 text-center">
         <button 
-          onClick={handleSave} 
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm ${isSaved ? 'bg-slate-100 text-slate-500 border border-slate-200' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200'}`}
+           onClick={handleSave} 
+           className={`px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-sm ${isSaved ? 'bg-slate-100 text-slate-500 border border-slate-200' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'}`}
         >
           {isSaved ? 'Telah Disimpan' : 'Simpan'}
         </button>
@@ -280,31 +439,33 @@ function AkademikView() {
   const akademikItems = settings.akademikItems || [];
   
   // Show candidates who have finished Tahfiz interview (have markahTahfiz) and are LAYAK
-  const eligibleCandidates = candidates.filter(c => c.statusTemuduga === 'LAYAK' && c.markahTahfiz);
+  const eligibleCandidates = candidates.filter(c => c.statusTemuduga === 'LAYAK');
 
   return (
-    <div>
-       <div className="flex items-center gap-4 border-b border-slate-100 pb-6 mb-8">
-         <div className="p-3 bg-emerald-100 rounded-xl">
-           <CheckSquare className="w-7 h-7 text-emerald-700" />
+    <div className="animate-in fade-in">
+       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 mb-8">
+         <div className="flex items-center gap-4">
+           <div className="p-3 bg-blue-100 rounded-xl">
+             <CheckSquare className="w-7 h-7 text-blue-700" />
+           </div>
+           <div>
+              <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">Penilaian Ujian Akademik</h3>
+              <p className="text-sm font-medium text-slate-500">Secara pukal (Semua calon yang layak ke peringkat temuduga)</p>
+           </div>
          </div>
-         <div>
-            <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight">Penilaian Ujian Akademik</h3>
-            <p className="text-slate-500 font-medium">Secara Pukal (Calon yang telah selesai ujian Tahfiz)</p>
-         </div>
-         <span className="ml-auto font-bold text-slate-500 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">{new Date().toLocaleDateString('ms-MY')}</span>
+         <span className="font-bold text-slate-500 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">{new Date().toLocaleDateString('ms-MY')}</span>
        </div>
 
        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden mb-10">
           <div className="overflow-x-auto">
              <table className="w-full text-left border-collapse min-w-max">
-                <thead className="bg-slate-100/50">
+                <thead className="bg-slate-50 border-b-2 border-slate-200">
                    <tr>
                       <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200">Nama Calon & IC</th>
-                      {akademikItems.map(item => (
+                      {akademikItems.map((item: any) => (
                          <th key={item.id} className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">{item.name} ({item.weight})</th>
                       ))}
-                      <th className="px-4 py-4 text-xs font-bold text-emerald-700 uppercase tracking-widest border-b border-slate-200 bg-emerald-50/50 text-center">Jumlah</th>
+                      <th className="px-4 py-4 text-xs font-bold text-blue-700 uppercase tracking-widest border-b border-slate-200 bg-blue-50/50 text-center">Jumlah</th>
                       <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-slate-200 text-center">Tindakan</th>
                    </tr>
                 </thead>
@@ -312,8 +473,8 @@ function AkademikView() {
                    {eligibleCandidates.length === 0 ? (
                       <tr>
                          <td colSpan={akademikItems.length + 3} className="px-6 py-12 text-center text-slate-500 font-medium bg-slate-50/30">
-                            Tiada calon yang telah selesai temuduga Tahfiz buat masa ini.<br/>
-                            <span className="text-sm mt-2 inline-block">Sistem hanya memaparkan calon yang LAYAK dan telah mendapat markah Tahfiz.</span>
+                            Tiada calon yang layak temuduga buat masa ini.<br/>
+                            <span className="text-sm mt-2 inline-block text-slate-400">Sistem hanya memaparkan calon yang LAYAK untuk dinilai.</span>
                          </td>
                       </tr>
                    ) : (
@@ -328,6 +489,7 @@ function AkademikView() {
     </div>
   );
 }
+
 
 // ================= PENTADBIR VIEW =================
 

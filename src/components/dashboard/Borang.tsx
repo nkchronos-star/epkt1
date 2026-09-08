@@ -391,27 +391,30 @@ export default function Borang() {
   return (
     <div className="animate-in fade-in py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
       <div className="mb-10 text-center">
-        <div className="inline-flex items-center justify-center p-3 bg-emerald-100 rounded-2xl mb-4">
-           <FileText className="w-8 h-8 text-emerald-600" />
+        <div className="inline-flex items-center justify-center p-3 bg-amber-100 rounded-2xl mb-4">
+           <FileText className="w-8 h-8 text-amber-600" />
         </div>
-        <h1 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Borang Permohonan</h1>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight uppercase">Permohonan Kemasukan Tingkatan 1<br/><span className="text-emerald-700">SMA Kota Gelanggi</span></h1>
         <p className="text-slate-500 text-lg">Sila isi semua maklumat di bawah dengan tepat. Sistem akan menyimpan draf secara automatik.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-10">
         {/* Gambar */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 p-8 sm:p-12 transition-transform duration-300 hover:shadow-2xl hover:shadow-slate-200/50">
-           <h2 className="text-2xl font-extrabold border-b border-slate-100 pb-5 mb-8 text-slate-800 flex items-center gap-3">
-             <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">1</span>
-             Muat Naik Gambar Pasport
-           </h2>
-           <div className="flex flex-col sm:flex-row items-center gap-8">
-              {!formData.gambarUrl && (
-                 <div className="w-32 h-40 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center text-slate-400 group hover:border-emerald-400 hover:bg-slate-50 transition-colors">
-                    <FileText className="w-8 h-8 mb-2 group-hover:text-emerald-500 transition-colors" />
-                    <span className="text-xs font-medium">Gambar</span>
-                 </div>
-              )}
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 overflow-hidden transition-transform duration-300 hover:shadow-2xl hover:shadow-slate-200/50">
+           <div className="bg-emerald-50 px-8 sm:px-12 py-4 border-b-2 border-emerald-100">
+             <h2 className="text-xl font-extrabold text-emerald-900 flex items-center gap-3">
+               <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm font-black shadow-sm">1</span>
+               MUAT NAIK GAMBAR PASPORT
+             </h2>
+           </div>
+           <div className="p-8 sm:p-12">
+             <div className="flex flex-col sm:flex-row items-center gap-8">
+                {!formData.gambarUrl && (
+                   <div className="w-32 h-40 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center text-slate-400 group hover:border-emerald-400 hover:bg-slate-50 transition-colors">
+                      <FileText className="w-8 h-8 mb-2 group-hover:text-emerald-500 transition-colors" />
+                      <span className="text-xs font-medium">Gambar</span>
+                   </div>
+                )}
               {formData.gambarUrl && (
                  <img src={formData.gambarUrl} alt="Passport" className="w-32 h-40 object-cover rounded-2xl border-2 border-slate-200" />
               )}
@@ -420,15 +423,19 @@ export default function Borang() {
                 <p className="mt-3 text-sm text-slate-400 font-medium">Format: JPG, PNG. Saiz maks: 2MB.</p>
               </div>
            </div>
+           </div>
         </div>
 
         {/* Bahagian A */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 p-8 sm:p-12 transition-transform duration-300 hover:shadow-2xl hover:shadow-slate-200/50">
-           <h2 className="text-2xl font-extrabold border-b border-slate-100 pb-5 mb-8 text-slate-800 flex items-center gap-3">
-             <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">2</span>
-             BAHAGIAN A : BUTIRAN PEMOHON
-           </h2>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 overflow-hidden transition-transform duration-300 hover:shadow-2xl hover:shadow-slate-200/50">
+           <div className="bg-emerald-50 px-8 sm:px-12 py-4 border-b-2 border-emerald-100">
+             <h2 className="text-xl font-extrabold text-emerald-900 flex items-center gap-3">
+               <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm font-black shadow-sm">2</span>
+               BAHAGIAN A : BUTIRAN PEMOHON
+             </h2>
+           </div>
+           <div className="p-8 sm:p-12">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
               <div className="md:col-span-2">
                 <label className="block text-sm font-bold text-slate-700 mb-2 tracking-wide uppercase">Nama Pemohon</label>
                 <input type="text" name="name" value={formData.name || ''} onChange={handleChange} className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 uppercase focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all font-medium text-slate-800 bg-slate-50 focus:bg-white" required />
@@ -502,16 +509,20 @@ export default function Borang() {
                 <textarea name="namaSekolahRendah" value={formData.namaSekolahRendah || ''} onChange={handleChange} className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 uppercase focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all font-medium text-slate-800 bg-slate-50 focus:bg-white" rows={3} required />
               </div>
            </div>
+           </div>
         </div>
 
         {/* Bahagian B */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 p-8 sm:p-12 transition-transform duration-300 hover:shadow-2xl hover:shadow-slate-200/50">
-           <h2 className="text-2xl font-extrabold border-b border-slate-100 pb-5 mb-8 text-slate-800 flex items-center gap-3">
-             <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">3</span>
-             BAHAGIAN B : MAKLUMAT IBU BAPA/PENJAGA
-           </h2>
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 overflow-hidden transition-transform duration-300 hover:shadow-2xl hover:shadow-slate-200/50">
+           <div className="bg-emerald-50 px-8 sm:px-12 py-4 border-b-2 border-emerald-100">
+             <h2 className="text-xl font-extrabold text-emerald-900 flex items-center gap-3">
+               <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm font-black shadow-sm">3</span>
+               BAHAGIAN B : MAKLUMAT IBU BAPA/PENJAGA
+             </h2>
+           </div>
            
-           <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 bg-slate-100/50 p-4 rounded-xl border border-slate-200/60 gap-4 mt-2">
+           <div className="p-8 sm:p-12">
+             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 bg-slate-100/50 p-4 rounded-xl border border-slate-200/60 gap-4 mt-2">
               <h3 className="font-extrabold text-slate-800 uppercase tracking-widest text-sm">Maklumat Bapa</h3>
               <div className="flex gap-3 text-xs flex-wrap">
                  <button type="button" onClick={copyAddressToBapa} className="bg-white border border-slate-300 px-3 py-2 rounded-lg font-bold text-emerald-700 hover:bg-emerald-50 transition">Salin Alamat Pemohon</button>
@@ -582,6 +593,7 @@ export default function Borang() {
                 <label className="block text-sm font-bold text-slate-700 mb-2 tracking-wide uppercase">No. Telefon</label>
                 <input type="text" name="telefonBapa" value={formData.telefonBapa || ''} onChange={handleChange} className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all font-medium text-slate-800 bg-slate-50 focus:bg-white" required />
               </div>
+           </div>
            </div>
 
            <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 bg-slate-100/50 p-4 rounded-xl border border-slate-200/60 gap-4 mt-8">
@@ -661,13 +673,16 @@ export default function Borang() {
            </div>
         </div>
         {/* Bahagian C */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 p-8 sm:p-12 transition-transform duration-300 hover:shadow-2xl hover:shadow-slate-200/50">
-           <h2 className="text-2xl font-extrabold border-b border-slate-100 pb-5 mb-8 text-slate-800 flex items-center gap-3">
-             <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">4</span>
-             BAHAGIAN C : MAKLUMAT AKADEMIK
-           </h2>
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 overflow-hidden transition-transform duration-300 hover:shadow-2xl hover:shadow-slate-200/50">
+           <div className="bg-emerald-50 px-8 sm:px-12 py-4 border-b-2 border-emerald-100">
+             <h2 className="text-xl font-extrabold text-emerald-900 flex items-center gap-3">
+               <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm font-black shadow-sm">4</span>
+               BAHAGIAN C : MAKLUMAT AKADEMIK
+             </h2>
+           </div>
            
-           <div className="mb-10">
+           <div className="p-8 sm:p-12">
+             <div className="mb-10">
               <h3 className="font-extrabold text-slate-800 mb-6 bg-slate-100/50 p-4 rounded-xl border border-slate-200/60 uppercase tracking-widest text-sm">a. Keputusan PBD (Akhir Tahun Darjah 5)</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
                  {['bm', 'bi', 'matematik', 'sains'].map((sub) => (
@@ -722,15 +737,19 @@ export default function Borang() {
               </div>
 
            </div>
+           </div>
         </div>
 
         {/* Bahagian D */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 p-8 sm:p-12 transition-transform duration-300 hover:shadow-2xl hover:shadow-slate-200/50">
-           <h2 className="text-2xl font-extrabold border-b border-slate-100 pb-5 mb-8 text-slate-800 flex items-center gap-3">
-             <span className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">5</span>
-             BAHAGIAN D : PENGESAHAN
-           </h2>
-           <div className="space-y-6">
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-slate-200/40 border border-slate-200/60 overflow-hidden transition-transform duration-300 hover:shadow-2xl hover:shadow-slate-200/50">
+           <div className="bg-emerald-50 px-8 sm:px-12 py-4 border-b-2 border-emerald-100">
+             <h2 className="text-xl font-extrabold text-emerald-900 flex items-center gap-3">
+               <span className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-sm font-black shadow-sm">5</span>
+               BAHAGIAN D : PENGESAHAN
+             </h2>
+           </div>
+           <div className="p-8 sm:p-12">
+             <div className="space-y-6">
              <div className="flex gap-4 items-start bg-slate-50 p-6 rounded-2xl border border-slate-200/60 hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => setAgreed(!agreed)}>
                <div className={`mt-1 w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${agreed ? 'bg-slate-500 border-emerald-500' : 'border-slate-300 bg-white'}`}>
                  {agreed && <CheckCircle className="w-4 h-4 text-white" />}
@@ -753,6 +772,7 @@ export default function Borang() {
                   </div>
                </div>
              )}
+           </div>
            </div>
         </div>
 
@@ -783,8 +803,7 @@ export default function Borang() {
                 </ul>
               </div>
            )}
-           </div>
-
+        </div>
       </form>
     </div>
   );
