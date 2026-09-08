@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../../store';
-import { LogOut, Users, FileSignature, CheckSquare, Settings, Lock, XCircle, Trash2, BarChart2, Link as LinkIcon, FileText } from 'lucide-react';
+import { LogOut, Users, FileSignature, CheckSquare, Settings, Lock, XCircle, Trash2, BarChart2, Link as LinkIcon, FileText, Download } from 'lucide-react';
 import { BorangCetakPDF } from './BorangCetakPDF';
 import PenilaianView from './PenilaianView';
 import { Candidate, Role } from '../../types';
@@ -62,9 +62,6 @@ export default function AdminPanel() {
             </button>
           </form>
                   
-          <div className="mt-8 p-4 bg-slate-50 border border-slate-200/60 rounded-xl text-xs text-slate-500 text-center font-medium">
-             ID Demo: <span className="font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">admin</span>, <span className="font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">tahfiz1</span>, <span className="font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">akademik1</span>, <span className="font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">pentadbir1</span>
-          </div>
         </div>
       </div>
     );
@@ -398,6 +395,18 @@ function AnalisisKemasukan({ candidates }: { candidates: any[] }) {
   );
 }
 
+export function downloadCSV(data: any[], filename: string) {
+  const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+    + data.map(row => row.map((cell: any) => `"${String(cell || '').replace(/"/g, '""')}"`).join(",")).join("\n");
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 function PentadbirView() {
   const [printCandidate, setPrintCandidate] = useState<Candidate | null>(null);
   const { candidates, settings } = useAppContext();
@@ -411,9 +420,42 @@ function PentadbirView() {
   if (filter === 'GAGAL') filtered = candidates.filter(c => c.statusTawaran === 'GAGAL');
   if (filter === 'TERIMA') filtered = candidates.filter(c => c.maklumBalasTawaran === 'TERIMA');
   if (filter === 'TOLAK') filtered = candidates.filter(c => c.maklumBalasTawaran === 'TOLAK');
+  if (filter === 'LAYAK_TEMUDUGA') filtered = candidates.filter(c => c.statusTemuduga === 'LAYAK');
+
+  const handleDownloadExcel = () => {
+    const headers = [
+      "No", "No. Kad Pengenalan", "Nama Calon", "Jantina", "Tarikh Lahir", "Tempat Lahir", 
+      "Sekolah Asal", "No. KP Bapa", "Nama Bapa", "No. Tel Bapa", "No. KP Ibu", "Nama Ibu", "No. Tel Ibu",
+      "Status Temuduga", "Markah Tahfiz", "Markah Akademik", "Status Tawaran", "Maklum Balas"
+    ];
+    
+    const rows = filtered.map((c, i) => [
+      i + 1,
+      c.ic || '',
+      c.name || '',
+      c.jantina || '',
+      c.tarikhLahir || '',
+      c.tempatLahir || '',
+      c.namaSekolahRendah || '',
+      c.icBapa || '',
+      c.namaBapa || '',
+      c.noTelBapa || '',
+      c.icIbu || '',
+      c.namaIbu || '',
+      c.noTelIbu || '',
+      c.statusTemuduga || '',
+      c.markahTahfiz?.jumlah || '0',
+      c.markahAkademik?.jumlah || '0',
+      c.statusTawaran || '',
+      c.maklumBalasTawaran || ''
+    ]);
+
+    downloadCSV([headers, ...rows], `Senarai_Calon_${filter}.csv`);
+  };
 
   return (
     <div>
+       <AnalisisKemasukan candidates={candidates} />
 
        {/* Analisa Penerimaan Tawaran (Pentadbir) */}
        <div className="mb-12">
@@ -457,18 +499,27 @@ function PentadbirView() {
        </div>
 
 
-       <div className="mb-8">
+       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
          <select 
            value={filter}
            onChange={(e) => setFilter(e.target.value)}
            className="px-6 py-3 rounded-xl text-sm font-bold border-2 border-slate-200 bg-white text-slate-800 shadow-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 min-w-[200px]"
          >
            <option value="ALL">Semua Calon</option>
+           <option value="LAYAK_TEMUDUGA">Layak Temuduga</option>
            <option value="BERJAYA">Tawaran Berjaya</option>
            <option value="GAGAL">Tawaran Gagal</option>
            <option value="TERIMA">Terima Tawaran</option>
            <option value="TOLAK">Tolak Tawaran</option>
          </select>
+
+         <button 
+           onClick={handleDownloadExcel}
+           className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-sm"
+         >
+           <Download className="w-5 h-5" />
+           Muat Turun CSV (Senarai Dipapar)
+         </button>
        </div>
 
        <div className="overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-sm">
@@ -594,6 +645,17 @@ function SuperAdminView() {
            <div>
              <h3 className="text-xl font-bold mb-6 flex items-center gap-3"><Settings className="w-6 h-6 text-slate-500" /> Tetapan Paparan Tarikh & Sistem</h3>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-slate-700">Tahun Sesi Kemasukan</span>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">Cth: 2026 / 2027</label>
+                    <input type="text" name="sesiKemasukan" value={settings.sesiKemasukan || '2026 / 2027'} onChange={handleSettingsChange} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+                  </div>
+                </div>
+
                 <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-slate-700">Borang Permohonan</span>
@@ -830,9 +892,32 @@ function SuperAdminView() {
        {activeTab === 'PERMOHONAN' && (
           <div className="space-y-6 animate-in fade-in">
              <AnalisisKemasukan candidates={candidates} />
-             <div className="flex items-center gap-3">
-                <Users className="w-6 h-6 text-slate-500" />
-                <h3 className="text-xl font-bold">Senarai Keseluruhan Permohonan</h3>
+             <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Users className="w-6 h-6 text-slate-500" />
+                  <h3 className="text-xl font-bold">Senarai Keseluruhan Permohonan</h3>
+                </div>
+                <button 
+                  onClick={() => {
+                    const headers = [
+                      "No", "No. Kad Pengenalan", "Nama Calon", "Jantina", "Tarikh Lahir", "Tempat Lahir", 
+                      "Sekolah Asal", "No. KP Bapa", "Nama Bapa", "No. Tel Bapa", "No. KP Ibu", "Nama Ibu", "No. Tel Ibu",
+                      "Status Temuduga", "Markah Tahfiz", "Markah Akademik", "Status Tawaran", "Maklum Balas"
+                    ];
+                    const rows = candidates.map((c, i) => [
+                      i + 1, c.ic || '', c.name || '', c.jantina || '', c.tarikhLahir || '', c.tempatLahir || '', 
+                      c.namaSekolahRendah || '', c.icBapa || '', c.namaBapa || '', c.noTelBapa || '', 
+                      c.icIbu || '', c.namaIbu || '', c.noTelIbu || '', c.statusTemuduga || '', 
+                      c.markahTahfiz?.jumlah || '0', c.markahAkademik?.jumlah || '0', 
+                      c.statusTawaran || '', c.maklumBalasTawaran || ''
+                    ]);
+                    downloadCSV([headers, ...rows], `Senarai_Keseluruhan_Calon.csv`);
+                  }}
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm text-sm"
+                >
+                  <Download className="w-4 h-4" />
+                  Muat Turun Semua
+                </button>
              </div>
              
              <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden">

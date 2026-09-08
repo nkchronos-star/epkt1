@@ -148,8 +148,7 @@ export default function Utama({ onNavigate }: UtamaProps) {
               <ul className="grid grid-cols-2 gap-2 text-slate-600 text-sm">
                 <li>&bull; Pend. Jasmani & Kesihatan</li>
                 <li>&bull; Perniagaan</li>
-                <li>&bull; Pend. Al-Quran & As-Sunnah</li>
-                <li>&bull; Pend. Syariah Islamiah</li>
+                <li>&bull; Pendidikan Islam</li>
               </ul>
             </div>
             <div>
