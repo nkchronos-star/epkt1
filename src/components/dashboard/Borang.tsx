@@ -194,8 +194,29 @@ export default function Borang() {
   };
 
   const getMissingFields = () => {
-    const req = ['name', 'ic', 'tarikhLahir', 'tempatLahir', 'jantina', 'alamat1', 'poskod', 'daerah', 'negeri', 'namaSekolahRendah', 'namaBapa', 'icBapa', 'pekerjaanBapa', 'telefonBapa', 'namaIbu', 'icIbu', 'pekerjaanIbu', 'telefonIbu'];
-    return req.filter(f => !formData[f as keyof Candidate]);
+    const req = ['gambarUrl', 'name', 'ic', 'tarikhLahir', 'tempatLahir', 'jantina', 'alamat1', 'poskod', 'daerah', 'negeri', 'namaSekolahRendah', 'namaBapa', 'icBapa', 'pekerjaanBapa', 'telefonBapa', 'namaIbu', 'icIbu', 'pekerjaanIbu', 'telefonIbu'];
+    const fieldLabels: Record<string, string> = {
+      gambarUrl: 'Gambar Pasport',
+      name: 'Nama Penuh Calon',
+      ic: 'No. Kad Pengenalan',
+      tarikhLahir: 'Tarikh Lahir',
+      tempatLahir: 'Tempat Lahir',
+      jantina: 'Jantina',
+      alamat1: 'Alamat (Baris 1)',
+      poskod: 'Poskod',
+      daerah: 'Daerah',
+      negeri: 'Negeri',
+      namaSekolahRendah: 'Nama Sekolah Rendah',
+      namaBapa: 'Nama Bapa / Penjaga 1',
+      icBapa: 'No. KP Bapa',
+      pekerjaanBapa: 'Pekerjaan Bapa',
+      telefonBapa: 'No. Telefon Bapa',
+      namaIbu: 'Nama Ibu / Penjaga 2',
+      icIbu: 'No. KP Ibu',
+      pekerjaanIbu: 'Pekerjaan Ibu',
+      telefonIbu: 'No. Telefon Ibu'
+    };
+    return req.filter(f => !formData[f as keyof Candidate]).map(f => fieldLabels[f] || f);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -421,6 +442,11 @@ export default function Borang() {
               <div className="flex-1 w-full text-center sm:text-left">
                 <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'gambarUrl')} className="block w-full text-sm text-slate-500 file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-slate-50 file:text-emerald-600 hover:file:bg-emerald-100 transition-colors cursor-pointer" />
                 <p className="mt-3 text-sm text-slate-400 font-medium">Format: JPG, PNG. Saiz maks: 2MB.</p>
+                {!formData.gambarUrl && (
+                  <div className="mt-3 inline-flex items-center gap-2 bg-red-50 text-red-600 px-3 py-1.5 rounded-lg border border-red-100">
+                    <span className="text-xs font-bold uppercase tracking-wide">Wajib: Sila muat naik gambar pasport</span>
+                  </div>
+                )}
               </div>
            </div>
            </div>
