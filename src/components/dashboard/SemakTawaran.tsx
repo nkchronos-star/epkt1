@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAppContext } from '../../store';
-import { Search, Info, CheckCircle, XCircle, Clock, Printer, Download, FileText } from 'lucide-react';
+import { Search, Info, CheckCircle, XCircle, Clock, Printer, Calendar, Download, FileText } from 'lucide-react';
 import { Candidate } from '../../types';
 import SuratTawaran from './SuratTawaran';
 
@@ -11,16 +11,27 @@ export default function SemakTawaran() {
   const [hasSearched, setHasSearched] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
 
+  const formatTarikh = (tarikhStr: string) => {
+     if(!tarikhStr) return '-';
+     const d = new Date(tarikhStr);
+     if(isNaN(d.getTime())) return tarikhStr;
+     const day = String(d.getDate()).padStart(2, '0');
+     const month = d.toLocaleDateString('ms-MY', { month: 'long' });
+     const year = d.getFullYear();
+     return `${day} - ${month} - ${year}`;
+  };
+
   if (!settings.tawaranBuka) {
     return (
-      <div className="animate-in fade-in duration-500 py-20 px-4 text-center max-w-2xl mx-auto">
-        <div className="inline-flex items-center justify-center p-4 bg-slate-100 rounded-full mb-6 shadow-inner">
-          <Clock className="w-12 h-12 text-slate-400" />
+      <div className="animate-in fade-in py-20 px-4 flex flex-col items-center justify-center text-center">
+        <div className="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 max-w-lg w-full">
+          <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Semakan Belum Dibuka</h2>
+          <p className="text-gray-600 mb-6">Semakan tawaran kemasukan belum dibuka buat masa ini. Harap maklum.</p>
+          <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700">
+             Tarikh semakan akan dibuka: <span className="font-semibold">{formatTarikh(settings.tarikhBukaTawaran)}</span>
+          </div>
         </div>
-        <h2 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">Semakan Belum Dibuka</h2>
-        <p className="text-slate-500 text-lg">
-          Semakan tawaran kemasukan akan dibuka pada <strong className="text-slate-800">{settings.tarikhBukaTawaran}</strong>.<br/>Sila kembali semula pada tarikh tersebut.
-        </p>
       </div>
     );
   }

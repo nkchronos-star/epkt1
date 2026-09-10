@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAppContext } from '../../store';
-import { LogOut, Users, FileSignature, CheckSquare, Settings, Lock, XCircle, Trash2, BarChart2, Link as LinkIcon, FileText, Download } from 'lucide-react';
+import { LogOut, Printer, Users, FileSignature, CheckSquare, Settings, Lock, XCircle, Trash2, BarChart2, Link as LinkIcon, FileText, Download } from 'lucide-react';
 import { BorangCetakPDF } from './BorangCetakPDF';
+import { BorangPukalCetakPDF } from './BorangPukalCetakPDF';
+
 import PenilaianView from './PenilaianView';
 import { Candidate, Role } from '../../types';
 
@@ -571,6 +573,8 @@ export function downloadCSV(data: any[], filename: string) {
 
 function PentadbirView() {
   const [printCandidate, setPrintCandidate] = useState<Candidate | null>(null);
+  const [printPukalBorang, setPrintPukalBorang] = useState<boolean>(false);
+
   const { candidates, settings } = useAppContext();
   const [filter, setFilter] = useState('ALL');
 
@@ -750,6 +754,8 @@ function SuperAdminView() {
   const { settings, updateSettings, syncSettingsToServer, candidates, updateCandidate, deleteCandidate, users, addUser, updateUser, deleteUser, infographics, addInfographic, deleteInfographic, currentUser } = useAppContext();
   const [activeTab, setActiveTab] = useState<'KAWALAN' | 'PENGGUNA' | 'PERMOHONAN' | 'MARKAH'>('KAWALAN');
   const [printCandidate, setPrintCandidate] = useState<Candidate | null>(null);
+  const [printPukalBorang, setPrintPukalBorang] = useState<boolean>(false);
+
 
   // Kawalan Handlers
   const handleSettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1060,6 +1066,13 @@ function SuperAdminView() {
                   <h3 className="text-xl font-bold">Senarai Keseluruhan Permohonan</h3>
                 </div>
                 <button 
+                  onClick={() => setPrintPukalBorang(true)}
+                  className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm text-sm"
+                >
+                  <Printer className="w-4 h-4" />
+                  Cetak Borang Pukal
+                </button>
+                <button 
                   onClick={() => {
                     const headers = [
                       "No", "No. Kad Pengenalan", "Nama Calon", "Jantina", "Tarikh Lahir", "Tempat Lahir", 
@@ -1159,6 +1172,7 @@ function SuperAdminView() {
        )}
 
        {printCandidate && <BorangCetakPDF candidate={printCandidate} onClose={() => setPrintCandidate(null)} />}
+       {printPukalBorang && <BorangPukalCetakPDF candidates={candidates} onClose={() => setPrintPukalBorang(false)} />}
 
        {activeTab === 'MARKAH' && (
           <div className="space-y-6 animate-in fade-in">

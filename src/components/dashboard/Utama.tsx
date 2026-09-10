@@ -42,7 +42,7 @@ export default function Utama({ onNavigate }: UtamaProps) {
           <div className="flex-1 rounded-xl overflow-hidden bg-slate-900 flex items-center justify-center relative min-h-[300px] shadow-inner">
             <iframe 
               className="absolute inset-0 w-full h-full"
-              src="https://www.youtube.com/embed/HrysVVSgNYs?si=HrysVVSgNYs" 
+              src="https://www.youtube.com/embed/JT6Py5iXp1g?si=VRrKskCawUxW1W1B" 
               title="YouTube video player" 
               frameBorder="0" 
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
