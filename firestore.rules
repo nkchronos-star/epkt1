@@ -90,7 +90,16 @@ service cloud.firestore {
     // --- COLLECTION RULES ---
 
     match /users/{userId} {
-      allow read, write: if true; // TEMP PERMISSIVE FOR LOCAL ADMIN
+      allow read, write: if true; 
+    }
+    match /config/{configId} {
+      allow read, write: if true;
+    }
+    match /candidates/{candidateId} {
+      allow read, write: if true;
+    }
+    match /infographics/{infoId} {
+      allow read, write: if true;
     }
 
     match /permohonan/{permohonanId} {
