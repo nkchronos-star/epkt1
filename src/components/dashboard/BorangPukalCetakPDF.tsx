@@ -27,7 +27,7 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
         {/* Print Content Area */}
         <div className="overflow-y-auto" id="printable-pukal-area">
           {candidates.map((candidate, index) => (
-            <div key={candidate.id} className="p-8 sm:p-12 w-full max-w-4xl mx-auto printable-page font-sans text-sm break-after-page text-black bg-white relative">
+            <div key={candidate.id} className="p-4 sm:p-8 print:p-2 w-full max-w-4xl mx-auto printable-page font-sans text-[11px] print:text-[11px] sm:text-xs break-after-page text-black bg-white relative">
               {/* HEADER */}
               <div className="text-center border-b-2 border-slate-800 pb-4 mb-6">
                 <h1 className="text-2xl font-black uppercase text-slate-900 tracking-tight">BORANG PERMOHONAN KEMASUKAN</h1>
@@ -81,9 +81,9 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
                </div>
                
                {/* KELUARGA */}
-               <section className="mt-8">
+               <section className="mt-4 print:mt-2">
                     <h3 className="bg-slate-100 p-2 font-bold text-slate-800 uppercase text-sm border-l-4 border-slate-800 mb-4">B. Maklumat Ibu Bapa / Penjaga</h3>
-                    <div className="grid grid-cols-2 gap-8 text-sm">
+                    <div className="grid grid-cols-2 gap-4 text-xs print:text-[11px]">
                         <div>
                             <span className="block font-black text-slate-900 border-b border-slate-200 pb-2 mb-3">BAPA / PENJAGA</span>
                             <div className="space-y-3">
@@ -108,7 +108,7 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
                {/* AKADEMIK */}
                <section>
                     <h3 className="bg-slate-100 p-2 font-bold text-slate-800 uppercase text-sm border-l-4 border-slate-800 mb-4 mt-6">C. Maklumat Akademik</h3>
-                    <div className="grid grid-cols-2 gap-6 text-sm">
+                    <div className="grid grid-cols-2 gap-4 text-xs print:text-[11px]">
                         <div>
                             <span className="block text-slate-500 font-bold mb-2">PBD (Akhir Tahun Darjah 5)</span>
                             <ul className="space-y-1">
@@ -142,11 +142,11 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
                 </section>
 
                {/* PENGESAHAN */}
-               <section className="mt-8">
+               <section className="mt-4 print:mt-2">
                     <h3 className="bg-slate-100 p-2 font-bold text-slate-800 uppercase text-sm border-l-4 border-slate-800 mb-4">D. Pengesahan</h3>
                     <div className="p-4 border-2 border-slate-200 rounded-lg text-sm text-slate-700 text-justify">
                         Saya mengesahkan bahawa segala maklumat yang diberikan di dalam borang ini adalah benar dan tepat. Saya memahami bahawa permohonan ini boleh dibatalkan sekiranya terdapat maklumat palsu.
-                        <div className="mt-16 grid grid-cols-2 gap-8 text-center">
+                        <div className="mt-8 print:mt-6 grid grid-cols-2 gap-8 text-center">
                             <div>
                                 <div className="border-b-2 border-slate-400 w-48 mx-auto mb-2"></div>
                                 <span className="block font-bold">Tandatangan Pemohon</span>
@@ -164,10 +164,9 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
       </div>
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          @page { size: A4 portrait; margin: 1cm; }
+          @page { size: A4 portrait; margin: 0.5cm; }
           body * { visibility: hidden !important; }
           
-          /* Unset fixed positioning and scroll limits on modal wrappers */
           .fixed.inset-0 { 
              position: absolute !important; 
              left: 0 !important;
@@ -192,17 +191,30 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
           .max-h-\[90vh\] { max-height: none !important; }
           .overflow-y-auto { overflow: visible !important; }
           
-          /* Show the printable area */
           #printable-pukal-area, #printable-pukal-area * { visibility: visible !important; }
           #printable-pukal-area { 
-            position: relative !important; 
+            position: absolute !important; 
+            left: 0 !important; 
+            top: 0 !important;
             width: 100% !important; 
             padding: 0 !important; 
             margin: 0 !important;
           }
           
-          .break-after-page { page-break-after: always !important; }
-          .break-after-page:last-child { page-break-after: auto !important; }
+          .printable-page {
+             height: 28.5cm; /* Enforce slightly less than A4 height */
+             overflow: hidden;
+             box-sizing: border-box;
+          }
+          
+          .break-after-page { 
+             page-break-after: always !important; 
+             break-after: page !important;
+          }
+          .break-after-page:last-child { 
+             page-break-after: auto !important; 
+             break-after: auto !important;
+          }
         }
       `}} />
     </div>

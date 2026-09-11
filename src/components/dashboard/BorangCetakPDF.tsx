@@ -74,9 +74,9 @@ export function BorangCetakPDF({ candidate, onClose }: { candidate: Candidate, o
            </div>
            
            {/* KELUARGA */}
-           <section className="mt-8">
+           <section className="mt-4 print:mt-2">
                 <h3 className="bg-slate-100 p-2 font-bold text-slate-800 uppercase text-sm border-l-4 border-slate-800 mb-4">B. Maklumat Ibu Bapa / Penjaga</h3>
-                <div className="grid grid-cols-2 gap-8 text-sm">
+                <div className="grid grid-cols-2 gap-4 text-xs print:text-[11px]">
                     <div>
                         <span className="block font-black text-slate-900 border-b border-slate-200 pb-2 mb-3">BAPA / PENJAGA</span>
                         <div className="space-y-3">
@@ -101,7 +101,7 @@ export function BorangCetakPDF({ candidate, onClose }: { candidate: Candidate, o
 {/* AKADEMIK */}
                   <section>
                     <h3 className="bg-slate-100 p-2 font-bold text-slate-800 uppercase text-sm border-l-4 border-slate-800 mb-4 mt-6">C. Maklumat Akademik</h3>
-                    <div className="grid grid-cols-2 gap-6 text-sm">
+                    <div className="grid grid-cols-2 gap-4 text-xs print:text-[11px]">
                         <div>
                            <span className="block text-slate-500 font-bold mb-2">PBD (Akhir Tahun Darjah 5)</span>
                            <ul className="space-y-1">
@@ -136,11 +136,11 @@ export function BorangCetakPDF({ candidate, onClose }: { candidate: Candidate, o
            
            
            {/* PENGESAHAN */}
-           <section className="mt-8">
+           <section className="mt-4 print:mt-2">
                 <h3 className="bg-slate-100 p-2 font-bold text-slate-800 uppercase text-sm border-l-4 border-slate-800 mb-4">D. Pengesahan</h3>
                 <div className="p-4 border-2 border-slate-200 rounded-lg text-sm text-slate-700 text-justify">
                     Saya mengesahkan bahawa segala maklumat yang diberikan di dalam borang ini adalah benar dan tepat. Saya memahami bahawa permohonan ini boleh dibatalkan sekiranya terdapat maklumat palsu.
-                    <div className="mt-16 grid grid-cols-2 gap-8 text-center">
+                    <div className="mt-8 print:mt-6 grid grid-cols-2 gap-8 text-center">
                         <div>
                             <div className="border-b-2 border-slate-400 w-48 mx-auto mb-2"></div>
                             <span className="block font-bold">Tandatangan Pemohon</span>
@@ -161,11 +161,50 @@ export function BorangCetakPDF({ candidate, onClose }: { candidate: Candidate, o
         </div>
       </div>
       
-      <style dangerouslySetInnerHTML={{__html: `
+            <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          body * { visibility: hidden; }
-          #printable-area, #printable-area * { visibility: visible; }
-          #printable-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0 !important; }
+          @page { size: A4 portrait; margin: 0.5cm; }
+          body * { visibility: hidden !important; }
+          
+          .fixed.inset-0 { 
+             position: absolute !important; 
+             left: 0 !important;
+             top: 0 !important;
+             overflow: visible !important;
+             background: transparent !important;
+             height: auto !important;
+             min-height: 100% !important;
+             display: block !important;
+             padding: 0 !important;
+          }
+          
+          .bg-white.max-w-4xl.w-full {
+             display: block !important;
+             box-shadow: none !important;
+             max-width: none !important;
+             width: 100% !important;
+             margin: 0 !important;
+             border-radius: 0 !important;
+          }
+          
+          .max-h-\[90vh\] { max-height: none !important; }
+          .overflow-y-auto { overflow: visible !important; }
+          
+          #printable-area, #printable-area * { visibility: visible !important; }
+          #printable-area { 
+            position: absolute !important; 
+            left: 0 !important; 
+            top: 0 !important;
+            width: 100% !important; 
+            padding: 0 !important; 
+            margin: 0 !important;
+          }
+          
+          .printable-page {
+             height: 28.5cm;
+             overflow: hidden;
+             box-sizing: border-box;
+          }
         }
       `}} />
     </div>

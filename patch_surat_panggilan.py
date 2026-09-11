@@ -1,4 +1,15 @@
-import { Candidate } from '../../types';
+import re
+
+with open('src/components/dashboard/SuratPanggilan.tsx', 'r') as f:
+    content = f.read()
+
+# 1. Update font sizes: remove text-xs, text-[11px], replace with text-sm or text-base
+content = content.replace('text-[11px]', 'text-sm')
+content = content.replace('text-xs', 'text-sm')
+content = content.replace('max-w-4xl', 'w-full max-w-5xl') # Make container wider for full page
+
+# Let's rebuild the letter content section specifically to ensure accuracy to Image 5
+new_content = """import { Candidate } from '../../types';
 import { useAppContext } from '../../store';
 
 export default function SuratPanggilan({ candidate }: { candidate: Candidate }) {
@@ -7,7 +18,7 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
   const tahunSesi = settings.sesiKemasukan?.substring(0, 4) || '2027';
   
   return (
-    <div id="printable-surat" className="bg-white p-8 print:p-0 print:py-4 max-w-5xl mx-auto shadow-2xl printable-area text-black font-sans text-sm">
+    <div className="bg-white p-8 print:p-0 print:py-4 max-w-5xl mx-auto shadow-2xl printable-area text-black font-sans text-sm">
       {/* Header Surat */}
       <div className="flex items-start mb-6 print:mb-4 border-b-2 border-black pb-4">
         <div className="flex items-center gap-6 w-full">
@@ -181,7 +192,7 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
              padding: 0 !important;
           }
           
-          .max-h-\[90vh\] { max-height: none !important; }
+          .max-h-\\[90vh\\] { max-height: none !important; }
           .overflow-y-auto { overflow: visible !important; }
           
           #printable-surat, #printable-surat * { visibility: visible !important; }
@@ -198,3 +209,8 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
     </div>
   );
 }
+"""
+
+with open('src/components/dashboard/SuratPanggilan.tsx', 'w') as f:
+    f.write(new_content)
+
