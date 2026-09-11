@@ -7,21 +7,21 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
   const tahunSesi = settings.sesiKemasukan?.substring(0, 4) || '2027';
   
   return (
-    <div id="printable-surat" className="bg-white p-8 print:p-0 print:py-4 max-w-5xl mx-auto shadow-2xl printable-area text-black font-sans text-sm">
+    <div id="printable-surat" className="bg-white p-8 print:p-0 print:py-2 max-w-5xl mx-auto shadow-2xl printable-area text-black font-sans text-[13px]">
       {/* Header Surat */}
-      <div className="flex items-start mb-6 print:mb-4 border-b-2 border-black pb-4">
+      <div className="flex items-start mb-6 print:mb-1 border-b-2 border-black pb-4">
         <div className="flex items-center gap-6 w-full">
-          <img src="https://i.postimg.cc/mrcDcHn3/logo-sma-cantik.png" alt="Jata Negara" className="w-24 h-auto object-contain " />
+          <img src="https://i.postimg.cc/mrcDcHn3/logo-sma-cantik.png" alt="Jata Negara" className="w-20 h-auto object-contain " />
           <div className="flex-1 flex justify-between items-start">
             <div>
-              <h1 className="font-bold text-lg mb-1">SMA KOTA GELANGGI 3</h1>
-              <p className="leading-tight uppercase text-sm">
+              <h1 className="font-bold text-base mb-1">SMA KOTA GELANGGI 3</h1>
+              <p className="leading-tight uppercase text-[13px]">
                 KOTA GELANGGI 3<br/>
                 27000 JERANTUT<br/>
                 PAHANG DARUL MAKMUR
               </p>
             </div>
-            <div className="text-sm leading-tight mt-6 print:mt-4">
+            <div className="text-[13px] leading-tight mt-6 print:mt-1">
               <p>Tel: 09-2051555</p>              
               <p>E-MEL: cft2001@moe.edu.my</p>
             </div>
@@ -29,8 +29,8 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
         </div>
       </div>
 
-      <div className="flex justify-end mb-6 print:mb-4">
-        <table className="text-sm">
+      <div className="flex justify-end mb-6 print:mb-1">
+        <table className="text-[13px]">
           <tbody>
             <tr>
               <td className="pr-4">Rujukan Kami</td>
@@ -44,7 +44,7 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
         </table>
       </div>
 
-      <div className="mb-6 print:mb-4 uppercase text-sm">
+      <div className="mb-6 print:mb-1 uppercase text-[13px]">
         <p>{candidate.name}</p>
         <p>{candidate.ic},</p>
         <p>{candidate.alamat1},</p>
@@ -53,26 +53,26 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
         <p>{candidate.negeri}.</p>
       </div>
 
-      <div className="mb-4 print:mb-2 text-sm">
+      <div className="mb-4 print:mb-1 text-[13px]">
         <p>Saudara / Saudari,</p>
       </div>
 
-      <div className="mb-6 print:mb-4">
-        <h2 className="font-bold uppercase underline text-sm">
+      <div className="mb-6 print:mb-1">
+        <h2 className="font-bold uppercase underline text-[13px]">
           PANGGILAN TEMUDUGA PENGAMBILAN PELAJAR TINGKATAN 1 SESI {settings.sesiKemasukan || '2027'}
         </h2>
       </div>
 
-      <div className="mb-4 print:mb-2 text-justify text-sm leading-relaxed">
-        <p className="mb-6 print:mb-4">Perkara di atas adalah dirujuk.</p>
+      <div className="mb-4 print:mb-1 text-justify text-[13px] leading-relaxed">
+        <p className="mb-6 print:mb-1">Perkara di atas adalah dirujuk.</p>
         
-        <div className="mb-6 print:mb-4 text-justify flex">
+        <div className="mb-6 print:mb-1 text-justify flex">
           <span className="w-10 shrink-0">2.</span>
           <div>
             <span>Sukacitanya dimaklumkan bahawa saudara/saudari telah <strong>TERPILIH</strong> untuk ditemuduga bagi Pengambilan Pelajar Tingkatan 1 di SMA Kota Gelanggi 3 tahun {tahunSesi}. Sesi temuduga akan dilaksanakan pada ketetapan berikut:</span>
             
-            <div className="ml-8 mt-4 mb-4">
-              <table className="w-full text-sm">
+            <div className="ml-8 mt-4 print:mt-2 mb-4 print:mb-2">
+              <table className="w-full text-[13px]">
                 <tbody>
                   <tr>
                     <td className="py-1 w-32">Tarikh</td>
@@ -102,8 +102,8 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
               </table>
             </div>
 
-            <div className="ml-8 mb-6">
-                <table className="w-full text-sm border-collapse border border-black">
+            <div className="ml-8 mb-6 print:mb-2">
+                <table className="w-full text-[13px] border-collapse border border-black">
                     <thead>
                         <tr>
                             <th className="border border-black py-1 px-2 text-center bg-gray-100 font-bold w-1/3">MASA</th>
@@ -133,29 +133,29 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
           </div>
         </div>
 
-        <div className="mb-6 print:mb-4 text-justify flex">
+        <div className="mb-6 print:mb-1 text-justify flex">
           <span className="w-10 shrink-0">3.</span>
           <span>Sekiranya saudara/saudari tidak menghadiri sesi temuduga pada tarikh dan masa yang telah ditetapkan, secara automatik permohonan anda adalah <strong>TERBATAL</strong>.</span>
         </div>
 
-        <div className="mb-6 print:mb-4 text-justify flex">
+        <div className="mb-6 print:mb-1 text-justify flex">
           <span className="w-10 shrink-0">4.</span>
           <span>Segala kerjasama yang diberikan amat kami hargai dan didahului dengan ucapan terima kasih.</span>
         </div>
 
-        <p className="mb-6 print:mb-4">Sekian, terima kasih.</p>
+        <p className="mb-6 print:mb-1">Sekian, terima kasih.</p>
       </div>
 
-      <div className="mt-6 print:mt-4 text-sm">
-        <p className="font-bold italic mb-4 print:mb-2">"MALAYSIA MADANI"</p>
-        <p className="font-bold italic mb-6 print:mb-4">"BERKHIDMAT UNTUK NEGARA"</p>
-        <p className="mb-8 print:mb-6">Saya yang menjalankan amanah,</p>
+      <div className="mt-6 print:mt-1 text-[13px]">
+        <p className="font-bold italic mb-4 print:mb-1">"MALAYSIA MADANI"</p>
+        <p className="font-bold italic mb-6 print:mb-1">"BERKHIDMAT UNTUK NEGARA"</p>
+        <p className="mb-6 print:mb-2">Saya yang menjalankan amanah,</p>
         
         <div>
           {settings.tandatanganPengetua ? (
             <img src={settings.tandatanganPengetua} alt="Tandatangan Pengetua" className="h-16 object-contain mb-2" />
           ) : (
-            <p className="mb-8 mt-12">.......................................................</p>
+            <p className="mb-6 print:mb-2 mt-8 print:mt-6">.......................................................</p>
           )}
           <p className="font-bold uppercase">({settings.namaPengetua || 'JUITA BINTI HAMZAH'})</p>
           <p>Pengetua</p>
@@ -165,7 +165,7 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
       
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          @page { size: A4 portrait; margin: 1cm; }
+          @page { size: A4 portrait; margin: 0.8cm; }
           body * { visibility: hidden !important; }
           
           /* Keep modal wrappers open and unrestrained for print */
@@ -192,6 +192,8 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
             width: 100% !important; 
             padding: 0 !important; 
             margin: 0 !important;
+            transform: scale(0.94);
+            transform-origin: top center;
           }
         }
       `}} />
