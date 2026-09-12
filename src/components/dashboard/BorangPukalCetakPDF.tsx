@@ -27,7 +27,7 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
         {/* Print Content Area */}
         <div className="overflow-y-auto" id="printable-pukal-area">
           {candidates.map((candidate, index) => (
-            <div key={candidate.id} className="p-4 sm:p-8 print:p-2 w-full max-w-4xl mx-auto printable-page font-sans text-[11px] print:text-[11px] sm:text-xs break-after-page text-black bg-white relative">
+            <div key={candidate.id} className="p-4 sm:p-6 print:p-0 w-full max-w-4xl mx-auto printable-page font-sans text-[11px] print:text-[10px] break-after-page text-black bg-white relative">
               {/* HEADER */}
               <div className="text-center border-b-2 border-slate-800 pb-4 mb-6">
                 <h1 className="text-2xl font-black uppercase text-slate-900 tracking-tight">BORANG PERMOHONAN KEMASUKAN</h1>
@@ -38,7 +38,7 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
                   {/* BUTIRAN */}
                   <div className="col-span-3">
                       <section>
-                        <h3 className="bg-slate-100 p-2 font-bold text-slate-800 uppercase text-sm border-l-4 border-slate-800 mb-4">A. Butiran Pemohon</h3>
+                        <h3 className="bg-slate-100 p-1.5 font-bold text-slate-800 uppercase text-[11px] print:text-[10px] border-l-4 border-slate-800 mb-2 print:mb-1">A. Butiran Pemohon</h3>
                         <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-sm">
                             <div className="col-span-2">
                                 <span className="block text-slate-500 font-medium text-xs">Nama Penuh</span>
@@ -82,11 +82,11 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
                
                {/* KELUARGA */}
                <section className="mt-4 print:mt-2">
-                    <h3 className="bg-slate-100 p-2 font-bold text-slate-800 uppercase text-sm border-l-4 border-slate-800 mb-4">B. Maklumat Ibu Bapa / Penjaga</h3>
-                    <div className="grid grid-cols-2 gap-4 text-xs print:text-[11px]">
+                    <h3 className="bg-slate-100 p-1.5 font-bold text-slate-800 uppercase text-[11px] print:text-[10px] border-l-4 border-slate-800 mb-2 print:mb-1">B. Maklumat Ibu Bapa / Penjaga</h3>
+                    <div className="grid grid-cols-2 gap-4 text-[11px] print:text-[10px]">
                         <div>
-                            <span className="block font-black text-slate-900 border-b border-slate-200 pb-2 mb-3">BAPA / PENJAGA</span>
-                            <div className="space-y-3">
+                            <span className="block font-black text-slate-900 border-b border-slate-200 pb-1 mb-1">BAPA / PENJAGA</span>
+                            <div className="space-y-1">
                                 <div><span className="block text-slate-500 text-xs">Nama</span> <span className="font-bold uppercase">{candidate.namaBapa || '-'}</span></div>
                                 <div><span className="block text-slate-500 text-xs">No. Kad Pengenalan</span> <span className="font-bold">{candidate.icBapa || '-'}</span></div>
                                 <div><span className="block text-slate-500 text-xs">No. Telefon</span> <span className="font-bold">{candidate.telefonBapa || '-'}</span></div>
@@ -94,8 +94,8 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
                             </div>
                         </div>
                         <div>
-                            <span className="block font-black text-slate-900 border-b border-slate-200 pb-2 mb-3">IBU</span>
-                            <div className="space-y-3">
+                            <span className="block font-black text-slate-900 border-b border-slate-200 pb-1 mb-1">IBU</span>
+                            <div className="space-y-1">
                                 <div><span className="block text-slate-500 text-xs">Nama</span> <span className="font-bold uppercase">{candidate.namaIbu || '-'}</span></div>
                                 <div><span className="block text-slate-500 text-xs">No. Kad Pengenalan</span> <span className="font-bold">{candidate.icIbu || '-'}</span></div>
                                 <div><span className="block text-slate-500 text-xs">No. Telefon</span> <span className="font-bold">{candidate.telefonIbu || '-'}</span></div>
@@ -107,8 +107,8 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
 
                {/* AKADEMIK */}
                <section>
-                    <h3 className="bg-slate-100 p-2 font-bold text-slate-800 uppercase text-sm border-l-4 border-slate-800 mb-4 mt-6">C. Maklumat Akademik</h3>
-                    <div className="grid grid-cols-2 gap-4 text-xs print:text-[11px]">
+                    <h3 className="bg-slate-100 p-1.5 font-bold text-slate-800 uppercase text-[11px] print:text-[10px] border-l-4 border-slate-800 mb-2 print:mb-1 mt-6">C. Maklumat Akademik</h3>
+                    <div className="grid grid-cols-2 gap-4 text-[11px] print:text-[10px]">
                         <div>
                             <span className="block text-slate-500 font-bold mb-2">PBD (Akhir Tahun Darjah 5)</span>
                             <ul className="space-y-1">
@@ -127,7 +127,7 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
                                 <li>Sains: <span className="font-bold">{candidate.pbdD6?.sains || '-'}</span></li>
                             </ul>
                         </div>
-                        <div className="col-span-2 mt-4 pt-4 border-t border-slate-100">
+                        <div className="col-span-2 mt-2 pt-2 border-t border-slate-100">
                             <span className="block text-slate-500 font-bold mb-2">Keputusan UPKK</span>
                             <ul className="grid grid-cols-2 gap-2">
                                 <li>Al-Quran: <span className="font-bold">{candidate.upkk?.alquran || '-'}</span></li>
@@ -143,10 +143,10 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
 
                {/* PENGESAHAN */}
                <section className="mt-4 print:mt-2">
-                    <h3 className="bg-slate-100 p-2 font-bold text-slate-800 uppercase text-sm border-l-4 border-slate-800 mb-4">D. Pengesahan</h3>
-                    <div className="p-4 border-2 border-slate-200 rounded-lg text-sm text-slate-700 text-justify">
+                    <h3 className="bg-slate-100 p-1.5 font-bold text-slate-800 uppercase text-[11px] print:text-[10px] border-l-4 border-slate-800 mb-2 print:mb-1">D. Pengesahan</h3>
+                    <div className="p-2 border-2 border-slate-200 rounded-lg text-xs print:text-[10px] text-slate-700 text-justify">
                         Saya mengesahkan bahawa segala maklumat yang diberikan di dalam borang ini adalah benar dan tepat. Saya memahami bahawa permohonan ini boleh dibatalkan sekiranya terdapat maklumat palsu.
-                        <div className="mt-8 print:mt-6 grid grid-cols-2 gap-8 text-center">
+                        <div className="mt-4 print:mt-2 grid grid-cols-2 gap-4 text-center">
                             <div>
                                 <div className="border-b-2 border-slate-400 w-48 mx-auto mb-2"></div>
                                 <span className="block font-bold">Tandatangan Pemohon</span>
@@ -164,7 +164,9 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
       </div>
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
-          @page { size: A4 portrait; margin: 0.5cm; }
+          @page { size: A4 portrait; margin: 0.5cm;
+          transform: scale(0.90);
+          transform-origin: top center; }
           body * { visibility: hidden !important; }
           
           .fixed.inset-0 { 
@@ -202,9 +204,8 @@ export function BorangPukalCetakPDF({ candidates, onClose }: { candidates: Candi
           }
           
           .printable-page {
-             height: 28.5cm; /* Enforce slightly less than A4 height */
-             overflow: hidden;
              box-sizing: border-box;
+             /* Remove fixed height to prevent blank extra pages */
           }
           
           .break-after-page { 
