@@ -126,16 +126,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateSettings = async (newSettings: Partial<ApplicationSettings>) => {
-    try {
-      await updateDoc(doc(db, 'config', 'main'), newSettings);
-    } catch (e) {
-      console.error("Error updating settings:", e);
-    }
+    // 1. Update React state immediately so UI feels responsive
+    setState(prev => {
+        const updatedSettings = { ...prev.settings, ...newSettings };
+        
+        // 2. Also try to push to Firebase in background to be safe
+        updateDoc(doc(db, 'config', 'main'), newSettings).catch(e => {
+            console.error("Firebase background sync failed:", e);
+        });
+        
+        return { ...prev, settings: updatedSettings };
+    });
   };
 
-  const syncSettingsToServer = () => {
-    // Left for compatibility, though realtime listener handles this.
-    alert('Sistem kini menggunakan storan Firebase. Semua perubahan disimpan secara automatik!');
+  const syncSettingsToServer = async () => {
+    try {
+      await setDoc(doc(db, 'config', 'main'), state.settings);
+      alert('Telah Berjaya! Semua Tetapan Sistem Berjaya Disimpan ke dalam Pangkalan Data.');
+    } catch (e) {
+      console.error("Ralat menyimpan tetapan:", e);
+      alert('Ralat! Tetapan tidak berjaya disimpan.');
+    }
   };
 
   const saveCandidate = async (candidate: Candidate) => {

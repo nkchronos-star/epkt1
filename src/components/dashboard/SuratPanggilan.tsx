@@ -14,22 +14,20 @@ export default function SuratPanggilan({ candidate }: { candidate: Candidate }) 
   return (
     <div id="printable-surat" className="bg-white p-8 print:p-0 print:py-2 max-w-5xl mx-auto shadow-2xl printable-area text-black font-sans text-[13px]">
       {/* Header Surat */}
-      <div className="flex items-start mb-2 print:mb-1 border-b-2 border-gray-400 pb-3">
-        <div className="flex items-center gap-6 w-full">
-          <img src="https://i.postimg.cc/mrcDcHn3/logo-sma-cantik.png" alt="Jata Negara" className="w-24 h-auto object-contain " />
-          <div className="flex-1 flex justify-between items-end">
-            <div className="text-gray-500">
-              <h1 className="font-bold text-xl mb-1 tracking-wide">SMA KOTA GELANGGI 3</h1>
-              <p className="leading-tight uppercase text-sm">
-                27000 JERANTUT<br/>
-                PAHANG DARUL MAKMUR
-              </p>
-            </div>
-            <div className="text-xs leading-tight text-gray-500 text-right">
-              <p>Tel:09-2051555</p>              
-              <p>E-MEL:<a href="mailto:cft2001@moe.edu.my" className="text-blue-500 underline">cft2001@moe.edu.my</a></p>
-            </div>
+      <div className="flex justify-between items-end mb-2 print:mb-1 border-b-2 border-gray-400 pb-3 w-full">
+        <div className="flex items-center gap-4">
+          <img src="https://i.postimg.cc/mrcDcHn3/logo-sma-cantik.png" alt="Logo" className="w-[72px] h-auto object-contain" />
+          <div className="text-slate-500">
+            <h1 className="font-bold text-lg mb-0.5 tracking-wide text-slate-600">SMA KOTA GELANGGI 3</h1>
+            <p className="leading-tight uppercase text-xs">
+              27000 JERANTUT<br/>
+              PAHANG DARUL MAKMUR
+            </p>
           </div>
+        </div>
+        <div className="text-[11px] leading-tight text-slate-500 text-right pb-1">
+          <p>Tel: 09-2051555</p>              
+          <p>E-MEL: <a href="mailto:cft2001@moe.edu.my" className="text-blue-500 underline">cft2001@moe.edu.my</a></p>
         </div>
       </div>
 
